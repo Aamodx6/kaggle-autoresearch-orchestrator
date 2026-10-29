@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaggle AutoResearch Orchestrator Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --border: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --success: #238636;
+            --warning: #d29922;
+            --danger: #da3633;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 24px;
+        }
+        .header {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .header h1 { font-size: 24px; color: #f0f6fc; margin-bottom: 8px; }
+        .header p { color: var(--text-secondary); font-size: 14px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+        }
+        .card .title { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-bottom: 6px; }
+        .card .value { font-size: 24px; font-weight: 700; color: #f0f6fc; }
+        .section {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .section h2 { font-size: 18px; color: #f0f6fc; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        th { color: var(--text-secondary); font-weight: 600; background: rgba(255,255,255,0.02); }
+        tr:hover { background-color: rgba(255,255,255,0.02); }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-supported { background: rgba(35, 134, 54, 0.2); color: #3fb950; border: 1px solid #238636; }
+        .badge-report { background: rgba(88, 166, 255, 0.2); color: #58a6ff; border: 1px solid #1f6feb; }
+        .badge-blocked { background: rgba(218, 54, 51, 0.2); color: #f85149; border: 1px solid #da3633; }
+        .badge-keep { background: rgba(35, 134, 54, 0.3); color: #3fb950; font-weight: bold; }
+        .badge-discard { background: rgba(218, 54, 51, 0.3); color: #f85149; }
+        .badge-baseline { background: rgba(210, 153, 34, 0.3); color: #d29922; }
+        code {
+            background-color: rgba(110, 118, 129, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Kaggle AutoResearch Orchestrator Dashboard</h1>
+        <p>Live Competitive Intelligence, Local 5-Fold Autoresearch Experiments, and Verified Submissions</p>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <div class="title">Total Competitions</div>
+            <div class="value">18</div>
+        </div>
+        <div class="card">
+            <div class="title">Supported CSV Competitions</div>
+            <div class="value">5</div>
+        </div>
+        <div class="card">
+            <div class="title">Best MVP Score (CV)</div>
+            <div class="value">0.95438</div>
+        </div>
+        <div class="card">
+            <div class="title">Submission Mode</div>
+            <div class="value" style="color: #3fb950;">DRY-RUN GATED</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>1. Competitions Registry & Status Overview</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Competition Slug</th>
+                    <th>Kind</th>
+                    <th>Status</th>
+                    <th>Evaluation Metric</th>
+                    <th>Direction</th>
+                    <th>My Best Score</th>
+                    <th>Deadline</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>playground-series-s5e12</code></td>
+                    <td>csv_tabular</td>
+                    <td><span class="badge badge-supported">supported</span></td>
+                    <td>Roc Auc Score</td>
+                    <td>maximize</td>
+                    <td><b>0.70804</b></td>
+                    <td>2025-12-31</td>
+                </tr>
+<tr>
+                    <td><code>vesuvius-challenge-surface-detection</code></td>
+                    <td>code_competition</td>
+                    <td><span class="badge badge-report">report_only</span></td>
+                    <td>Vesuvius 2025 Metric</td>
+                    <td>maximize</td>
+                    <td><b>0.55134</b></td>
+                    <td>2026-02-27</td>
+                </tr>
+<tr>
+                    <td><code>playground-series-s6e2</code></td>
+                    <td>csv_tabular</td>
+                    <td><span class="badge badge-supported">supported</span></td>
+                    <td>Roc Auc Score</td>
+                    <td>maximize</td>
+                    <td><b>0.95408</b></td>
+                    <td>2026-02-28</td>
+                </tr>
+<tr>
+                    <td><code>ai-mathematical-olympiad-progress-prize-3</code></td>
+                    <td>other</td>
+                    <td><span class="badge badge-blocked">blocked: submissions disabled</span></td>
+                    <td>118448 AIMO 3 Multirun-Accuracy</td>
+                    <td>maximize</td>
+                    <td><b>0.00000</b></td>
+                    <td>2026-04-15</td>
+                </tr>
+<tr>
+                    <td><code>hull-tactical-market-prediction</code></td>
+                    <td>other</td>
+                    <td><span class="badge badge-blocked">blocked: submissions disabled</span></td>
+                    <td>Hull Competition Sharpe</td>
+                    <td>maximize</td>
+                    <td><b>17.50700</b></td>
+                    <td>2026-06-25</td>
+                </tr>
+<tr>
+                    <td><code>playground-series-s6e7</code></td>
+                    <td>csv_tabular</td>
+                    <td><span class="badge badge-supported">supported</span></td>
+                    <td>Balanced Accuracy Score</td>
+                    <td>maximize</td>
+                    <td><b>0.95113</b></td>
+                    <td>2026-07-31</td>
+                </tr>
+<tr>
+                    <td><code>autonomous-agent-prediction-beta</code></td>
+                    <td>agent_or_optimization</td>
+                    <td><span class="badge badge-report">report_only</span></td>
+                    <td>Autonomous Agent Prediction Beta Metric</td>
+                    <td>maximize</td>
+                    <td><b>0.81900</b></td>
+                    <td>2026-08-06</td>
+                </tr>
+<tr>
+                    <td><code>playground-series-s6e8</code></td>
+                    <td>csv_tabular</td>
+                    <td><span class="badge badge-supported">supported</span></td>
+                    <td>Roc Auc Score</td>
+                    <td>maximize</td>
+                    <td><b>0.97129</b></td>
+                    <td>2026-08-31</td>
+                </tr>
+<tr>
+                    <td><code>biohub-cell-tracking-during-development</code></td>
+                    <td>code_competition</td>
+                    <td><span class="badge badge-report">report_only</span></td>
+                    <td>CZI Biohub Zebrafish 133605</td>
+                    <td>maximize</td>
+                    <td><b>0.95387</b></td>
+                    <td>2026-09-29</td>
+                </tr>
+<tr>
+                    <td><code>playground-series-s6e9</code></td>
+                    <td>csv_tabular</td>
+                    <td><span class="badge badge-supported">supported</span></td>
+                    <td>Roc Auc Score</td>
+                    <td>maximize</td>
+                    <td><b>0.94657</b></td>
+                    <td>2026-09-30</td>
+                </tr>
+<tr>
+                    <td><code>kaggriculture</code></td>
+                    <td>other</td>
+                    <td><span class="badge badge-blocked">blocked: submissions disabled</span></td>
+                    <td>kaggriculture</td>
+                    <td>maximize</td>
+                    <td><b>2493.10000</b></td>
+                    <td>2026-10-14</td>
+                </tr>
+<tr>
+                    <td><code>rsna-knee-abnormality-detection</code></td>
+                    <td>code_competition</td>
+                    <td><span class="badge badge-report">report_only</span></td>
+                    <td>Roc Auc Score</td>
+                    <td>maximize</td>
+                    <td><b>0.95800</b></td>
+                    <td>2026-10-22</td>
+                </tr>
+<tr>
+                    <td><code>arc-prize-2026-arc-agi-3</code></td>
+                    <td>code_competition</td>
+                    <td><span class="badge badge-report">report_only</span></td>
+                    <td>ARC-AGI-3 Metric</td>
+                    <td>maximize</td>
+                    <td><b>26.73000</b></td>
+                    <td>2026-11-02</td>
+                </tr>
+<tr>
+                    <td><code>enveda-CASMI26-molecule-id-mass-spectra</code></td>
+                    <td>code_competition</td>
+                    <td><span class="badge badge-report">report_only</span></td>
+                    <td>CASMI: Mean Average Precision</td>
+                    <td>maximize</td>
+                    <td><b>0.45600</b></td>
+                    <td>2026-12-14</td>
+                </tr>
+<tr>
+                    <td><code>the-pokemon-company-ptcg-ai-battle-challenge-playground</code></td>
+                    <td>agent_or_optimization</td>
+                    <td><span class="badge badge-report">report_only</span></td>
+                    <td>cabt_bo3</td>
+                    <td>maximize</td>
+                    <td><b>-</b></td>
+                    <td>2027-01-08</td>
+                </tr>
+<tr>
+                    <td><code>google-verifiable-quantum-circuit-compilation</code></td>
+                    <td>agent_or_optimization</td>
+                    <td><span class="badge badge-report">report_only</span></td>
+                    <td>Google Quantum AI Metric</td>
+                    <td>maximize</td>
+                    <td><b>1.16626</b></td>
+                    <td>2027-01-20</td>
+                </tr>
+<tr>
+                    <td><code>squares-in-squares</code></td>
+                    <td>agent_or_optimization</td>
+                    <td><span class="badge badge-report">report_only</span></td>
+                    <td>Squares in Squares</td>
+                    <td>maximize</td>
+                    <td><b>22.26200</b></td>
+                    <td>2027-07-18</td>
+                </tr>
+<tr>
+                    <td><code>connectx</code></td>
+                    <td>agent_or_optimization</td>
+                    <td><span class="badge badge-report">report_only</span></td>
+                    <td>Connect X</td>
+                    <td>maximize</td>
+                    <td><b>900.50000</b></td>
+                    <td>2030-01-01</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>2. Public Research & Community Code Mining</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Notebook Reference</th>
+                    <th>Author</th>
+                    <th>Votes</th>
+                    <th>Extracted Techniques</th>
+                    <th>License</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><a href="https://www.kaggle.com/code/kospintr/heart-xgb-lightgbm-catb-baseline-k-fold" target="_blank" style="color: #58a6ff;"><code>kospintr/heart-xgb-lightgbm-catb-baseline-k-fold</code></a></td>
+                    <td>kospintr</td>
+                    <td>149</td>
+                    <td><code>{"models": ["Standard Classifier"], "features": ["Domain ratio features (e.g. ST depression / Max HR, BP / Age)"], "cv":...</code></td>
+                    <td>Apache 2.0 / Kaggle Open Code License</td>
+                </tr>
+<tr>
+                    <td><a href="https://www.kaggle.com/code/omidbaghchehsaraei/the-best-solo-model-so-far-realmlp-lb-0-95397" target="_blank" style="color: #58a6ff;"><code>omidbaghchehsaraei/the-best-solo-model-so-far-realmlp-lb-0-95397</code></a></td>
+                    <td>omidbaghchehsaraei</td>
+                    <td>140</td>
+                    <td><code>{"models": ["Standard Classifier"], "features": ["Domain ratio features (e.g. ST depression / Max HR, BP / Age)"], "cv":...</code></td>
+                    <td>Apache 2.0 / Kaggle Open Code License</td>
+                </tr>
+<tr>
+                    <td><a href="https://www.kaggle.com/code/azzamradman/0226-blend-the-blender-do-it-the-hard-way" target="_blank" style="color: #58a6ff;"><code>azzamradman/0226-blend-the-blender-do-it-the-hard-way</code></a></td>
+                    <td>azzamradman</td>
+                    <td>95</td>
+                    <td><code>{"models": ["Standard Classifier"], "features": ["Domain ratio features (e.g. ST depression / Max HR, BP / Age)"], "cv":...</code></td>
+                    <td>Apache 2.0 / Kaggle Open Code License</td>
+                </tr>
+<tr>
+                    <td><a href="https://www.kaggle.com/code/rattans/logistic-regression-ps-s6e2" target="_blank" style="color: #58a6ff;"><code>rattans/logistic-regression-ps-s6e2</code></a></td>
+                    <td>rattans</td>
+                    <td>92</td>
+                    <td><code>{"models": ["Standard Classifier"], "features": ["Domain ratio features (e.g. ST depression / Max HR, BP / Age)"], "cv":...</code></td>
+                    <td>Apache 2.0 / Kaggle Open Code License</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>3. AutoResearch Experiment History & Improvement Curve</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Iteration</th>
+                    <th>Commit Hash</th>
+                    <th>Status</th>
+                    <th>CV Mean</th>
+                    <th>CV Std</th>
+                    <th>Runtime (s)</th>
+                    <th>Hypothesis Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>0</td>
+                    <td><code>baseline</code></td>
+                    <td><span class="badge badge-baseline">BASELINE</span></td>
+                    <td><b>0.954383</b></td>
+                    <td>0.000389</td>
+                    <td>10.0</td>
+                    <td>Baseline LightGBM 5-Fold Stratified (ROC-AUC=0.95438)</td>
+                </tr>
+<tr>
+                    <td>1</td>
+                    <td><code>8e4b6b2</code></td>
+                    <td><span class="badge badge-discard">DISCARD</span></td>
+                    <td><b>N/A</b></td>
+                    <td>0.000000</td>
+                    <td>1.4</td>
+                    <td>Add cardiovascular domain interaction ratios (ST_dep/Max_HR, BP/Age, Chol/Max_HR)</td>
+                </tr>
+<tr>
+                    <td>2</td>
+                    <td><code>2375c78</code></td>
+                    <td><span class="badge badge-discard">DISCARD</span></td>
+                    <td><b>N/A</b></td>
+                    <td>0.000000</td>
+                    <td>1.3</td>
+                    <td>Tune LightGBM num_leaves=45 and learning_rate=0.04 with colsample_bytree=0.85</td>
+                </tr>
+<tr>
+                    <td>3</td>
+                    <td><code>ac8a8ad</code></td>
+                    <td><span class="badge badge-discard">DISCARD</span></td>
+                    <td><b>0.954271</b></td>
+                    <td>0.000420</td>
+                    <td>17.7</td>
+                    <td>Add cardiovascular domain interaction ratios (ST_dep/Max_HR, BP/Age, Chol/Max_HR)</td>
+                </tr>
+<tr>
+                    <td>4</td>
+                    <td><code>17b1b61</code></td>
+                    <td><span class="badge badge-discard">DISCARD</span></td>
+                    <td><b>0.954425</b></td>
+                    <td>0.000399</td>
+                    <td>21.5</td>
+                    <td>Tune LightGBM num_leaves=45 and learning_rate=0.04 with colsample_bytree=0.85</td>
+                </tr>
+<tr>
+                    <td>5</td>
+                    <td><code>baseline</code></td>
+                    <td><span class="badge badge-baseline">BASELINE</span></td>
+                    <td><b>0.954383</b></td>
+                    <td>0.000389</td>
+                    <td>10.0</td>
+                    <td>Baseline LightGBM 5-Fold Stratified (ROC-AUC=0.95438)</td>
+                </tr>
+<tr>
+                    <td>6</td>
+                    <td><code>ac8a8ad</code></td>
+                    <td><span class="badge badge-discard">DISCARD</span></td>
+                    <td><b>0.954271</b></td>
+                    <td>0.000420</td>
+                    <td>44.0</td>
+                    <td>Add cardiovascular domain interaction ratios (ST_dep/Max_HR, BP/Age, Chol/Max_HR)</td>
+                </tr>
+<tr>
+                    <td>7</td>
+                    <td><code>17b1b61</code></td>
+                    <td><span class="badge badge-discard">DISCARD</span></td>
+                    <td><b>0.954425</b></td>
+                    <td>0.000399</td>
+                    <td>76.8</td>
+                    <td>Tune LightGBM num_leaves=45 and learning_rate=0.04 with colsample_bytree=0.85</td>
+                </tr>
+<tr>
+                    <td>8</td>
+                    <td><code>e013c07</code></td>
+                    <td><span class="badge badge-discard">DISCARD</span></td>
+                    <td><b>0.954429</b></td>
+                    <td>0.000429</td>
+                    <td>76.1</td>
+                    <td>Add quadratic non-linear risk terms (ST_depression^2, Age * BP interaction)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>4. Submissions & Leaderboard Audit</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Ref</th>
+                    <th>Competition</th>
+                    <th>File</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Public Score</th>
+                    <th>Private Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>50100554</code></td>
+                    <td><code>playground-series-s5e12</code></td>
+                    <td>submission.csv</td>
+                    <td>2026-01-30</td>
+                    <td>SubmissionStatus.COMPLETE</td>
+                    <td><b style="color: #3fb950;">0.70804</b></td>
+                    <td>0.70502</td>
+                </tr>
+<tr>
+                    <td><code>49379903</code></td>
+                    <td><code>playground-series-s5e12</code></td>
+                    <td>submission.csv</td>
+                    <td>2025-12-27</td>
+                    <td>SubmissionStatus.COMPLETE</td>
+                    <td><b style="color: #3fb950;">0.70765</b></td>
+                    <td>0.70477</td>
+                </tr>
+<tr>
+                    <td><code>49350003</code></td>
+                    <td><code>playground-series-s5e12</code></td>
+                    <td>submission.csv</td>
+                    <td>2025-12-26</td>
+                    <td>SubmissionStatus.COMPLETE</td>
+                    <td><b style="color: #3fb950;">0.70740</b></td>
+                    <td>0.70457</td>
+                </tr>
+<tr>
+                    <td><code>49194502</code></td>
+                    <td><code>playground-series-s5e12</code></td>
+                    <td>submission.csv</td>
+                    <td>2025-12-19</td>
+                    <td>SubmissionStatus.COMPLETE</td>
+                    <td><b style="color: #3fb950;">0.70684</b></td>
+                    <td>0.70409</td>
+                </tr>
+<tr>
+                    <td><code>49098185</code></td>
+                    <td><code>playground-series-s5e12</code></td>
+                    <td>submission.csv</td>
+                    <td>2025-12-15</td>
+                    <td>SubmissionStatus.COMPLETE</td>
+                    <td><b style="color: #3fb950;">0.69711</b></td>
+                    <td>0.69375</td>
+                </tr>
+<tr>
+                    <td><code>49058770</code></td>
+                    <td><code>playground-series-s5e12</code></td>
+                    <td>submission.csv</td>
+                    <td>2025-12-14</td>
+                    <td>SubmissionStatus.COMPLETE</td>
+                    <td><b style="color: #3fb950;">0.70457</b></td>
+                    <td>0.70187</td>
+                </tr>
+<tr>
+                    <td><code>50229382</code></td>
+                    <td><code>vesuvius-challenge-surface-detection</code></td>
+                    <td>submission.zip</td>
+                    <td>2026-02-06</td>
+                    <td>SubmissionStatus.COMPLETE</td>
+                    <td><b style="color: #3fb950;">0.55134</b></td>
+                    <td>0.56137</td>
+                </tr>
+<tr>
+                    <td><code>49446516</code></td>
+                    <td><code>vesuvius-challenge-surface-detection</code></td>
+                    <td>submission.zip</td>
+                    <td>2025-12-31</td>
+                    <td>SubmissionStatus.COMPLETE</td>
+                    <td><b style="color: #3fb950;">0.45515</b></td>
+                    <td>0.46194</td>
+                </tr>
+<tr>
+                    <td><code>49358743</code></td>
+                    <td><code>vesuvius-challenge-surface-detection</code></td>
+                    <td>submission.zip</td>
+                    <td>2025-12-26</td>
+                    <td>SubmissionStatus.COMPLETE</td>
+                    <td><b style="color: #3fb950;">0.45515</b></td>
+                    <td>0.46194</td>
+                </tr>
+<tr>
+                    <td><code>50576001</code></td>
+                    <td><code>playground-series-s6e2</code></td>
+                    <td>submission.csv</td>
+                    <td>2026-02-25</td>
+                    <td>SubmissionStatus.COMPLETE</td>
+                    <td><b style="color: #3fb950;">0.95408</b></td>
+                    <td>0.95527</td>
+                </tr>
+<tr>
+                    <td><code>52580313</code></td>
+                    <td><code>ai-mathematical-olympiad-progress-prize-3</code></td>
+                    <td>submission.parquet</td>
+                    <td>2026-05-12</td>
+                    <td>SubmissionStatus.COMPLETE</td>
+                    <td><b style="color: #3fb950;">0.00000</b></td>
+                    <td>0.00000</td>
+                </tr>
+<tr>
+                    <td><code>49351153</code></td>
+                    <td><code>ai-mathematical-olympiad-progress-prize-3</code></td>
+                    <td>submission.parquet</td>
+                    <td>2025-12-26</td>
+                    <td>SubmissionStatus.ERROR</td>
+                    <td><b style="color: #3fb950;">-</b></td>
+                    <td>-</td>
+                </tr>
+<tr>
+                    <td><code>49350186</code></td>
+                    <td><code>ai-mathematical-olympiad-progress-prize-3</code></td>
+                    <td>submission.parquet</td>
+                    <td>2025-12-26</td>
+                    <td>SubmissionStatus.ERROR</td>
+                    <td><b style="color: #3fb950;">-</b></td>
+                    <td>-</td>
+                </tr>
+<tr>
+                    <td><code>49234041</code></td>
+                    <td><code>ai-mathematical-olympiad-progress-prize-3</code></td>
+                    <td>submission.parquet</td>
+                    <td>2025-12-20</td>
+                    <td>SubmissionStatus.ERROR</td>
+                    <td><b style="color: #3fb950;">-</b></td>
+                    <td>-</td>
+                </tr>
+<tr>
+                    <td><code>49233497</code></td>
+                    <td><code>ai-mathematical-olympiad-progress-prize-3</code></td>
+                    <td>submission.parquet</td>
+                    <td>2025-12-20</td>
+                    <td>SubmissionStatus.ERROR</td>
+                    <td><b style="color: #3fb950;">-</b></td>
+                    <td>-</td>
+                </tr>
+<tr>
+                    <td><code>49194582</code></td>
+                    <td><code>ai-mathematical-olympiad-progress-prize-3</code></td>
+                    <td>submission.parquet</td>
+                    <td>2025-12-19</td>
+                    <td>SubmissionStatus.ERROR</td>
+                    <td><b style="color: #3fb950;">0.00000</b></td>
+                    <td>0.00000</td>
+                </tr>
+<tr>
+                    <td><code>49010819</code></td>
+                    <td><code>hull-tactical-market-prediction</code></td>
+                    <td>submission.parquet</td>
+                    <td>2025-12-12</td>
+                    <td>SubmissionStatus.ERROR</td>
+                    <td><b style="color: #3fb950;">17.50700</b></td>
+                    <td>17.50700</td>
+                </tr>
+<tr>
+                    <td><code>49009474</code></td>
+                    <td><code>hull-tactical-market-prediction</code></td>
+                    <td>submission.parquet</td>
+                    <td>2025-12-12</td>
+                    <td>SubmissionStatus.ERROR</td>
+                    <td><b style="color: #3fb950;">17.28700</b></td>
+                    <td>17.28700</td>
+                </tr>
+<tr>
+                    <td><code>49009221</code></td>
+                    <td><code>hull-tactical-market-prediction</code></td>
+                    <td>submission.parquet</td>
+                    <td>2025-12-12</td>
+                    <td>SubmissionStatus.ERROR</td>
+                    <td><b style="color: #3fb950;">17.50700</b></td>
+                    <td>17.50700</td>
+                </tr>
+<tr>
+                    <td><code>48990152</code></td>
+                    <td><code>hull-tactical-market-prediction</code></td>
+                    <td>submission.parquet</td>
+                    <td>2025-12-12</td>
+                    <td>SubmissionStatus.ERROR</td>
+                    <td><b style="color: #3fb950;">0.61600</b></td>
+                    <td>0.61600</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

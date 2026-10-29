@@ -2,6 +2,8 @@
 
 import argparse
 import sys
+import threading
+import time
 from pathlib import Path
 
 from orch.analyzer import NotebookAnalyzer
@@ -121,6 +123,40 @@ def run_full_pipeline(slug: str, config, connector, registry, submit: bool = Fal
     print("=" * 70)
 
 
+def run_ui_mode(port: int = 8000):
+    """Starts the Kaggle AutoResearch Web Interface and opens the browser."""
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+
+    import webbrowser
+    import uvicorn
+    from orch.api import app
+
+    url = f"http://127.0.0.1:{port}"
+    logger.info(f"Starting Kaggle AutoResearch Web UI on {url}...")
+    
+    # Open browser in a separate thread after server starts
+    def open_browser():
+        time.sleep(1.0)
+        webbrowser.open(url)
+
+    threading.Thread(target=open_browser, daemon=True).start()
+    
+    print("\n" + "=" * 70)
+    print("Kaggle AutoResearch Orchestrator - Professional Web Interface")
+    print(f"Local URL: {url}")
+    print("Press Ctrl+C to stop the web server.")
+    print("=" * 70 + "\n")
+    
+    try:
+        uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")
+    except KeyboardInterrupt:
+        logger.info("UI stopped by user.")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Kaggle AutoResearch Orchestrator CLI",
@@ -128,9 +164,10 @@ def main():
     )
     parser.add_argument(
         "mode",
-        choices=["discover", "research", "submit", "full"],
+        choices=["discover", "research", "submit", "full", "ui"],
         help="Operational mode",
     )
+
     parser.add_argument(
         "--competition",
         "-c",
@@ -178,6 +215,9 @@ def main():
         run_submit_mode(args.competition, config, connector, registry, submit=submit_flag)
     elif args.mode == "full":
         run_full_pipeline(args.competition, config, connector, registry, submit=submit_flag)
+    elif args.mode == "ui":
+        run_ui_mode()
+
 
 
 if __name__ == "__main__":
