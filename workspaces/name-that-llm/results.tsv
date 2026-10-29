@@ -1,0 +1,5 @@
+commit	cv_mean	cv_std	runtime	mem	status	description
+baseline	0.954380	0.000390	10.0	512	baseline	Initial LightGBM 5-Fold Stratified
+ac8a8ad	N/A	0.000000	1.5	512	discard	Add cardiovascular domain interaction ratios (ST_dep/Max_HR, BP/Age, Chol/Max_HR)
+17b1b61	N/A	0.000000	1.2	512	discard	Tune LightGBM num_leaves=45 and learning_rate=0.04 with colsample_bytree=0.85
+e013c07	N/A	0.000000	1.2	512	discard	Add quadratic non-linear risk terms (ST_depression^2, Age * BP interaction)

@@ -29,7 +29,9 @@ export const SubmissionsPage: React.FC<SubmissionsPageProps> = ({ activeCompetit
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<any>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [authorized, setAuthorized] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('Verified 5-Fold LightGBM Candidate');
 
@@ -61,11 +63,13 @@ export const SubmissionsPage: React.FC<SubmissionsPageProps> = ({ activeCompetit
 
   const handleValidate = async () => {
     setIsValidating(true);
+    setValidationError(null);
+    setValidationResult(null);
     try {
       const result = await api.validateSubmission(selectedComp);
       setValidationResult(result);
     } catch (err: any) {
-      alert(err.message || 'Validation failed');
+      setValidationError(err.message || 'Validation failed. No candidate file generated yet for this competition.');
     } finally {
       setIsValidating(false);
     }
@@ -74,12 +78,13 @@ export const SubmissionsPage: React.FC<SubmissionsPageProps> = ({ activeCompetit
   const handleLiveSubmit = async () => {
     if (!authorized) return;
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       await api.submitCandidate(selectedComp, true, submitMessage);
       setIsSubmitModalOpen(false);
       onOpenQueue();
     } catch (err: any) {
-      alert(err.message || 'Submission failed');
+      setSubmitError(err.message || 'Submission failed');
     } finally {
       setIsSubmitting(false);
     }
@@ -250,6 +255,27 @@ export const SubmissionsPage: React.FC<SubmissionsPageProps> = ({ activeCompetit
               <span className="font-mono text-emerald-700 font-semibold">5 of 5 remaining today</span>
             </div>
           </div>
+
+          {/* Validation or Submission Notices */}
+          {validationError && (
+            <div className="p-3 bg-amber-50 text-amber-900 rounded-lg border border-amber-200 text-xs flex items-start gap-2">
+              <AlertTriangle size={15} className="text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold block">Pre-Flight Notice</span>
+                {validationError}
+              </div>
+            </div>
+          )}
+
+          {submitError && (
+            <div className="p-3 bg-rose-50 text-rose-900 rounded-lg border border-rose-200 text-xs flex items-start gap-2">
+              <ShieldAlert size={15} className="text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold block">Submission Error</span>
+                {submitError}
+              </div>
+            </div>
+          )}
 
           {/* 6-Point Schema Verification Checklist */}
           <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-2">

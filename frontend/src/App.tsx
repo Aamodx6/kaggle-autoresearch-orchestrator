@@ -119,7 +119,7 @@ export const App: React.FC = () => {
               onSelectCompetition={handleSelectCompetition}
               onNavigate={handleNavigate}
               onOpenQueue={() => handleNavigate('queue')}
-              initialSlug={navParams?.slug || activeCompetition}
+              initialSlug={navParams?.slug || null}
             />
           )}
           {activePage === 'research' && (
@@ -128,7 +128,7 @@ export const App: React.FC = () => {
               onSelectCompetition={handleSelectCompetition}
               onNavigate={handleNavigate}
               onOpenQueue={() => handleNavigate('queue')}
-              initialSlug={navParams?.slug || activeCompetition}
+              initialSlug={navParams?.slug || null}
             />
           )}
           {activePage === 'experiments' && (

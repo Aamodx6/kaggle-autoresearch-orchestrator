@@ -1,9 +1,9 @@
 # Stage 3: Public Research Evidence
 
-**Competition:** `playground-series-s6e2`  
-**Synthesized Research Artifact:** `research/playground-series-s6e2.md`  
+**Competition:** `name-that-llm`  
+**Synthesized Research Artifact:** `research/name-that-llm.md`  
 
-# Competitive Research Analysis: `playground-series-s6e2`
+# Competitive Research Analysis: `name-that-llm`
 
 ## 1. Executive Summary
 Analyzed top 4 public Kaggle notebooks by community votes and recency. Note: public scores on the Kaggle API kernels view were unexposed; notebooks were prioritized by vote count and verified domain relevance.
@@ -14,10 +14,10 @@ Analyzed top 4 public Kaggle notebooks by community votes and recency. Note: pub
 
 | Notebook Reference | Author | Votes | Primary Models | CV Strategy | Ensembling | License |
 |---|---|---|---|---|---|---|
-| [`kospintr/heart-xgb-lightgbm-catb-baseline-k-fold`](https://www.kaggle.com/code/kospintr/heart-xgb-lightgbm-catb-baseline-k-fold) | `kospintr` | 149 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
-| [`omidbaghchehsaraei/the-best-solo-model-so-far-realmlp-lb-0-95397`](https://www.kaggle.com/code/omidbaghchehsaraei/the-best-solo-model-so-far-realmlp-lb-0-95397) | `omidbaghchehsaraei` | 140 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
-| [`azzamradman/0226-blend-the-blender-do-it-the-hard-way`](https://www.kaggle.com/code/azzamradman/0226-blend-the-blender-do-it-the-hard-way) | `azzamradman` | 95 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
-| [`rattans/logistic-regression-ps-s6e2`](https://www.kaggle.com/code/rattans/logistic-regression-ps-s6e2) | `rattans` | 92 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
+| [`martynaplomecka/starter-notebook-for-name-that-llm-competition`](https://www.kaggle.com/code/martynaplomecka/starter-notebook-for-name-that-llm-competition) | `martynaplomecka` | 462 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
+| [`josephadamski91/teach-the-model-10-atlas`](https://www.kaggle.com/code/josephadamski91/teach-the-model-10-atlas) | `josephadamski91` | 153 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
+| [`lightningv08/0-642-lora-llama-qwen3-8-27b`](https://www.kaggle.com/code/lightningv08/0-642-lora-llama-qwen3-8-27b) | `lightningv08` | 145 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
+| [`romantamrazov/name-that-llm-who-am-i`](https://www.kaggle.com/code/romantamrazov/name-that-llm-who-am-i) | `romantamrazov` | 136 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
 
 ---
 
