@@ -81,7 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!collapsed && (
             <div className="flex flex-col truncate">
               <span className="font-semibold text-sm text-slate-900 tracking-tight">Kaggle Research</span>
-              <span className="text-[11px] text-slate-400 font-mono tracking-wider">AUTORESEARCH</span>
+              <span className="text-[11px] text-slate-400 font-mono">v0.1.0</span>
             </div>
           )}
         </div>

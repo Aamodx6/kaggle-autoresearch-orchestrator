@@ -98,7 +98,7 @@ export const SettingsPage: React.FC = () => {
         <div className="p-5 bg-white rounded-lg border border-slate-200 space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
             <FlaskConical size={16} className="text-blue-600" />
-            <h2 className="text-sm font-semibold text-slate-900">AutoResearch Keep/Revert Parameters</h2>
+            <h2 className="text-sm font-semibold text-slate-900">Optimization & CV Parameters</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>

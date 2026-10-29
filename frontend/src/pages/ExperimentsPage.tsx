@@ -88,9 +88,9 @@ export const ExperimentsPage: React.FC<ExperimentsPageProps> = ({
       {/* Page Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-slate-200">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">AutoResearch Experiments</h1>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Model Experiments</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Karpathy-style keep/revert hypothesis optimization with strict statistical noise gating.
+            Keep/revert optimization loop evaluated against fold cross-validation noise floor.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ export const ExperimentsPage: React.FC<ExperimentsPageProps> = ({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50"
           >
             <FlaskConical size={13} className={runningLoop ? 'animate-spin' : ''} />
-            Run AutoResearch Loop
+            Run Experiments
           </button>
         </div>
       </div>
@@ -224,7 +224,7 @@ export const ExperimentsPage: React.FC<ExperimentsPageProps> = ({
               {/* Statistical Evaluation Box */}
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-2">
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Statistical Hypothesis Verification
+                  Cross-Validation Gate & Evaluation
                 </span>
                 <div className="grid grid-cols-3 gap-3">
                   <div>

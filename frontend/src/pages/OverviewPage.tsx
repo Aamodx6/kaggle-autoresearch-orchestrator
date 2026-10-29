@@ -81,7 +81,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">Overview</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Monitor competitions, autonomous experiments, and submission performance.
+            Monitor competitions, experiments, and submission performance.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -98,7 +98,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors"
           >
             <Search size={13} />
-            Run Research
+            Extract Research
           </button>
           <button
             onClick={onOpenQueue}
@@ -157,7 +157,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
-                <FlaskConical size={16} className="animate-spin" />
+                <FlaskConical size={16} />
               </div>
               <div>
                 <div className="flex items-center gap-2">

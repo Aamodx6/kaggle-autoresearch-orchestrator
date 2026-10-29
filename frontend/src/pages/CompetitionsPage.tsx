@@ -298,21 +298,21 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
                     disabled={Boolean(actionInProgress)}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-50"
                   >
-                    🌱 Setup Baseline
+                    Setup Baseline
                   </button>
                   <button
                     onClick={() => handleAction('research', selectedComp)}
                     disabled={Boolean(actionInProgress)}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-50"
                   >
-                    📚 Mine Research
+                    Analyze Notebooks
                   </button>
                   <button
                     onClick={() => handleAction('experiment', selectedComp)}
                     disabled={Boolean(actionInProgress)}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                   >
-                    🧪 AutoResearch Loop
+                    Run Experiments
                   </button>
                 </div>
               </div>

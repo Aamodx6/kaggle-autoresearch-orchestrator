@@ -19,7 +19,7 @@ from orch.analyzer import NotebookAnalyzer
 from orch.config import load_config, AppConfig
 from orch.connector import KaggleConnector
 from orch.discovery import DiscoveryService
-from orch.loop import AutoResearchLoop
+from orch.loop import AutoResearchLoop, HYPOTHESIS_EXPERIMENTS
 from orch.registry import Registry
 from orch.reporting import DashboardReporter
 from orch.researcher import PublicResearcher
@@ -395,14 +395,16 @@ def get_experiment_details(exp_id: int):
     baseline_score = 0.95438
     cv_mean = target_exp.get("cv_mean")
     delta = (cv_mean - baseline_score) if cv_mean is not None else None
-    
-    diff_sample = """--- train.py (baseline)
-+++ train.py (experiment)
-@@ -40,6 +40,11 @@
-+    # Hypothesis: Cardiovascular domain ratios
-+    df_train['ratio_st_hr'] = df_train['ST depression'] / (df_train['Max HR'] + 1e-5)
-+    df_test['ratio_st_hr'] = df_test['ST depression'] / (df_test['Max HR'] + 1e-5)
-"""
+
+    exp_desc = target_exp.get("description", "")
+    matching_hyp = next((h for h in HYPOTHESIS_EXPERIMENTS if h["description"] == exp_desc or h["id"] in exp_desc), None)
+    if matching_hyp:
+        diff_lines = ["--- train.py (baseline)", f"+++ train.py ({matching_hyp['id']})", "@@ Feature Engineering @@"]
+        for line in matching_hyp["feature_code"].strip().splitlines():
+            diff_lines.append(f"+{line}" if line.strip() else "+")
+        diff_sample = "\n".join(diff_lines)
+    else:
+        diff_sample = f"--- train.py (baseline)\n+++ train.py (exp_#{exp_id})\n@@ Configuration @@\n+ Initial LightGBM 5-Fold Stratified\n+ CV: {cv_mean} (Std: {target_exp.get('cv_std')})"
 
     return {
         "experiment": target_exp,

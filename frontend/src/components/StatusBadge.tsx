@@ -16,7 +16,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md' })
     dotColor = 'bg-emerald-500';
   } else if (['running', 'discovering', 'researching', 'training', 'validating', 'submitting', 'processing', 'analyzed'].includes(norm)) {
     colorClasses = 'bg-blue-50 text-blue-800 border-blue-200';
-    dotColor = 'bg-blue-500 animate-pulse';
+    dotColor = 'bg-blue-500';
   } else if (['queued', 'pending', 'report_only', 'pending evaluation', 'warning'].includes(norm)) {
     colorClasses = 'bg-amber-50 text-amber-800 border-amber-200';
     dotColor = 'bg-amber-500';

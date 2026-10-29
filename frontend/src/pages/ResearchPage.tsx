@@ -7,7 +7,7 @@ import {
   CheckCircle2,
   Clock,
   ArrowRight,
-  Sparkles,
+  FileText,
   ShieldCheck,
   FileCode,
   Tag,
@@ -95,7 +95,7 @@ export const ResearchPage: React.FC<ResearchPageProps> = ({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-50"
           >
             <RefreshCw size={13} className={mining ? 'animate-spin' : ''} />
-            Mine Top Notebooks
+            Fetch Public Notebooks
           </button>
         </div>
       </div>
@@ -103,7 +103,7 @@ export const ResearchPage: React.FC<ResearchPageProps> = ({
       {/* Workflow Stepper: Discover -> Rank -> Inspect -> Reproduce -> Compare */}
       <div className="p-4 bg-white rounded-lg border border-slate-200">
         <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-3">
-          Automated Research Pipeline Workflow
+          Notebook Analysis Pipeline
         </span>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           {stages.map((st, idx) => (
@@ -216,9 +216,9 @@ export const ResearchPage: React.FC<ResearchPageProps> = ({
       <div className="p-5 bg-white rounded-lg border border-slate-200 space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-amber-500" />
+            <FileText size={16} className="text-slate-500" />
             <h2 className="text-sm font-semibold text-slate-900">
-              Synthesized Research: <span className="font-mono">{slug}</span>
+              Extracted Techniques & Code Patterns: <span className="font-mono">{slug}</span>
             </h2>
           </div>
           <span className="text-xs text-slate-400 font-mono">
