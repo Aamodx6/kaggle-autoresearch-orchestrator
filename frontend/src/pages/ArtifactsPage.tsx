@@ -15,11 +15,16 @@ import { api } from '../api/client';
 import type { ArtifactRecord } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
 
-export const ArtifactsPage: React.FC = () => {
+interface ArtifactsPageProps {
+  activeCompetition?: string;
+}
+
+export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ activeCompetition }) => {
   const [artifacts, setArtifacts] = useState<ArtifactRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
   const [filterType, setFilterType] = useState('all');
+  const [compFilter, setCompFilter] = useState<string>(activeCompetition || 'all');
 
   const fetchArtifacts = async () => {
     try {
@@ -36,13 +41,23 @@ export const ArtifactsPage: React.FC = () => {
     fetchArtifacts();
   }, []);
 
+  useEffect(() => {
+    if (activeCompetition) {
+      setCompFilter(activeCompetition);
+    }
+  }, [activeCompetition]);
+
   const handleCopy = (path: string) => {
     navigator.clipboard.writeText(path);
     setCopiedPath(path);
     setTimeout(() => setCopiedPath(null), 2000);
   };
 
+  const uniqueComps = Array.from(new Set(artifacts.map((a) => a.competition)));
+
   const filtered = artifacts.filter((a) => {
+    const matchesComp = compFilter === 'all' || a.competition === compFilter;
+    if (!matchesComp) return false;
     if (filterType === 'all') return true;
     if (filterType === 'candidates') return a.type.toLowerCase().includes('submission');
     if (filterType === 'checkpoints') return a.type.toLowerCase().includes('checkpoint') || a.name.includes('best');
@@ -68,38 +83,56 @@ export const ArtifactsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setFilterType('all')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-            filterType === 'all'
-              ? 'bg-slate-900 text-white font-semibold'
-              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-          }`}
-        >
-          All Artifacts ({artifacts.length})
-        </button>
-        <button
-          onClick={() => setFilterType('candidates')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-            filterType === 'candidates'
-              ? 'bg-slate-900 text-white font-semibold'
-              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-          }`}
-        >
-          Submission Candidates
-        </button>
-        <button
-          onClick={() => setFilterType('checkpoints')}
-          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-            filterType === 'checkpoints'
-              ? 'bg-slate-900 text-white font-semibold'
-              : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-          }`}
-        >
-          Verified Best Checkpoints
-        </button>
+      {/* Filter Tabs & Competition Scope */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setFilterType('all')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              filterType === 'all'
+                ? 'bg-slate-900 text-white font-semibold'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            All Types ({artifacts.length})
+          </button>
+          <button
+            onClick={() => setFilterType('candidates')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              filterType === 'candidates'
+                ? 'bg-slate-900 text-white font-semibold'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            Submission Candidates
+          </button>
+          <button
+            onClick={() => setFilterType('checkpoints')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              filterType === 'checkpoints'
+                ? 'bg-slate-900 text-white font-semibold'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            Verified Best Checkpoints
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-400 font-medium">Scope:</span>
+          <select
+            value={compFilter}
+            onChange={(e) => setCompFilter(e.target.value)}
+            className="px-3 py-1.5 text-xs font-mono font-medium rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="all">All Competitions ({uniqueComps.length})</option>
+            {uniqueComps.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Artifacts Table */}

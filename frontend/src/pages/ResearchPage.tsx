@@ -18,23 +18,32 @@ import { StatusBadge } from '../components/StatusBadge';
 import { Modal } from '../components/Modal';
 
 interface ResearchPageProps {
+  activeCompetition: string;
+  onSelectCompetition?: (slug: string) => void;
   onNavigate: (page: string, params?: any) => void;
   onOpenQueue: () => void;
   initialSlug?: string;
 }
 
 export const ResearchPage: React.FC<ResearchPageProps> = ({
+  activeCompetition,
+  onSelectCompetition,
   onNavigate,
   onOpenQueue,
-  initialSlug = 'playground-series-s6e2',
+  initialSlug,
 }) => {
-  const [slug, setSlug] = useState(initialSlug);
+  const [slug, setSlug] = useState(initialSlug || activeCompetition || 'playground-series-s6e2');
+  const [competitions, setCompetitions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mining, setMining] = useState(false);
   const [stages, setStages] = useState<Array<{ name: string; status: string; description: string }>>([]);
   const [notebooks, setNotebooks] = useState<NotebookRecord[]>([]);
   const [markdown, setMarkdown] = useState('');
   const [selectedNb, setSelectedNb] = useState<NotebookRecord | null>(null);
+
+  useEffect(() => {
+    api.getCompetitions().then(setCompetitions).catch(console.error);
+  }, []);
 
   const loadResearch = async (targetSlug: string) => {
     setLoading(true);
@@ -51,8 +60,21 @@ export const ResearchPage: React.FC<ResearchPageProps> = ({
   };
 
   useEffect(() => {
+    if (activeCompetition && activeCompetition !== slug) {
+      setSlug(activeCompetition);
+    }
+  }, [activeCompetition]);
+
+  useEffect(() => {
     loadResearch(slug);
   }, [slug]);
+
+  const handleSelectChange = (newSlug: string) => {
+    setSlug(newSlug);
+    if (onSelectCompetition) {
+      onSelectCompetition(newSlug);
+    }
+  };
 
   const handleMineResearch = async () => {
     setMining(true);
@@ -79,14 +101,24 @@ export const ResearchPage: React.FC<ResearchPageProps> = ({
         <div className="flex items-center gap-3">
           <select
             value={slug}
-            onChange={(e) => setSlug(e.target.value)}
+            onChange={(e) => handleSelectChange(e.target.value)}
             className="px-3 py-1.5 text-xs font-mono font-medium rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
-            <option value="playground-series-s6e2">playground-series-s6e2</option>
-            <option value="playground-series-s5e12">playground-series-s5e12</option>
-            <option value="playground-series-s6e7">playground-series-s6e7</option>
-            <option value="playground-series-s6e8">playground-series-s6e8</option>
-            <option value="playground-series-s6e9">playground-series-s6e9</option>
+            {competitions.length > 0 ? (
+              competitions.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.slug} ({c.kind === 'csv_tabular' ? 'Tabular - Supported' : 'Report Only'})
+                </option>
+              ))
+            ) : (
+              <>
+                <option value="playground-series-s6e2">playground-series-s6e2</option>
+                <option value="playground-series-s5e12">playground-series-s5e12</option>
+                <option value="playground-series-s6e7">playground-series-s6e7</option>
+                <option value="playground-series-s6e8">playground-series-s6e8</option>
+                <option value="playground-series-s6e9">playground-series-s6e9</option>
+              </>
+            )}
           </select>
 
           <button

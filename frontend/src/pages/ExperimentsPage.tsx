@@ -20,17 +20,20 @@ import { StatusBadge } from '../components/StatusBadge';
 import { Modal } from '../components/Modal';
 
 interface ExperimentsPageProps {
+  activeCompetition: string;
   onOpenQueue: () => void;
   initialExpId?: number;
 }
 
 export const ExperimentsPage: React.FC<ExperimentsPageProps> = ({
+  activeCompetition,
   onOpenQueue,
   initialExpId,
 }) => {
   const [experiments, setExperiments] = useState<ExperimentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [runningLoop, setRunningLoop] = useState(false);
+  const [selectedCompFilter, setSelectedCompFilter] = useState<string>(activeCompetition || 'all');
   const [selectedExpId, setSelectedExpId] = useState<number | null>(initialExpId || null);
   const [expDetails, setExpDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -49,6 +52,12 @@ export const ExperimentsPage: React.FC<ExperimentsPageProps> = ({
   useEffect(() => {
     fetchExperiments();
   }, []);
+
+  useEffect(() => {
+    if (activeCompetition) {
+      setSelectedCompFilter(activeCompetition);
+    }
+  }, [activeCompetition]);
 
   const loadDetails = async (id: number) => {
     setLoadingDetails(true);
@@ -72,7 +81,7 @@ export const ExperimentsPage: React.FC<ExperimentsPageProps> = ({
   const handleRunLoop = async () => {
     setRunningLoop(true);
     try {
-      await api.runExperiment('playground-series-s6e2');
+      await api.runExperiment(activeCompetition || 'playground-series-s6e2');
       onOpenQueue();
     } catch (err) {
       console.error(err);
@@ -82,6 +91,13 @@ export const ExperimentsPage: React.FC<ExperimentsPageProps> = ({
   };
 
   const baselineScore = 0.95438;
+
+  const uniqueComps = Array.from(new Set(experiments.map((e) => e.competition_slug)));
+
+  const filteredExperiments = experiments.filter((e) => {
+    if (selectedCompFilter === 'all') return true;
+    return e.competition_slug === selectedCompFilter;
+  });
 
   return (
     <div className="space-y-6">
@@ -94,6 +110,18 @@ export const ExperimentsPage: React.FC<ExperimentsPageProps> = ({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Competition Filter */}
+          <select
+            value={selectedCompFilter}
+            onChange={(e) => setSelectedCompFilter(e.target.value)}
+            className="px-2.5 py-1.5 text-xs rounded-md border border-slate-200 bg-white font-mono text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="all">All Competitions</option>
+            {uniqueComps.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+
           <button
             onClick={fetchExperiments}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-sm transition-colors"

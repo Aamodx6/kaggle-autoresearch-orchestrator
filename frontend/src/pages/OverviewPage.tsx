@@ -4,13 +4,15 @@ import {
   Search,
   Cpu,
   ArrowRight,
-  TrendingUp,
   FlaskConical,
   Trophy,
   Send,
-  AlertCircle,
-  Play,
+  Wrench,
   CheckCircle2,
+  ExternalLink,
+  Tag,
+  Shield,
+  Layers,
 } from 'lucide-react';
 import { api } from '../api/client';
 import type { OverviewMetrics, CompetitionSummary, ExperimentRecord, SubmissionRecord, QueueTask } from '../types';
@@ -18,27 +20,25 @@ import { MetricCard } from '../components/MetricCard';
 import { StatusBadge } from '../components/StatusBadge';
 
 interface OverviewPageProps {
+  activeCompetition: string;
   onNavigate: (page: string, params?: any) => void;
   onOpenQueue: () => void;
 }
 
-export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQueue }) => {
+export const OverviewPage: React.FC<OverviewPageProps> = ({
+  activeCompetition,
+  onNavigate,
+  onOpenQueue,
+}) => {
   const [loading, setLoading] = useState(true);
-  const [metrics, setMetrics] = useState<OverviewMetrics | null>(null);
-  const [activeResearch, setActiveResearch] = useState<QueueTask | null>(null);
-  const [competitions, setCompetitions] = useState<CompetitionSummary[]>([]);
-  const [experiments, setExperiments] = useState<ExperimentRecord[]>([]);
-  const [submissions, setSubmissions] = useState<SubmissionRecord[]>([]);
+  const [data, setData] = useState<any>(null);
   const [syncing, setSyncing] = useState(false);
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
-      const data = await api.getOverview();
-      setMetrics(data.metrics);
-      setActiveResearch(data.active_research);
-      setCompetitions(data.recent_competitions);
-      setExperiments(data.recent_experiments);
-      setSubmissions(data.recent_submissions);
+      const res = await api.getOverview(activeCompetition);
+      setData(res);
     } catch (err) {
       console.error(err);
     } finally {
@@ -48,9 +48,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 4000);
+    const interval = setInterval(loadData, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeCompetition]);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -64,7 +64,25 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
     }
   };
 
-  if (loading && !metrics) {
+  const handleAction = async (actionType: 'baseline' | 'research' | 'experiment') => {
+    setActionInProgress(actionType);
+    try {
+      if (actionType === 'baseline') {
+        await api.runBaseline(activeCompetition);
+      } else if (actionType === 'research') {
+        await api.runResearch(activeCompetition);
+      } else if (actionType === 'experiment') {
+        await api.runExperiment(activeCompetition);
+      }
+      onOpenQueue();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  if (loading && !data) {
     return (
       <div className="flex h-64 items-center justify-center">
         <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
@@ -72,7 +90,19 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
     );
   }
 
+  const target = data?.target_competition || {};
+  const metrics = data?.metrics;
+  const activeResearch = data?.active_research;
+  const classifications = data?.classifications || {};
   const bestImp = metrics?.best_validation_improvement;
+
+  const formatKindBadge = (kind?: string) => {
+    if (kind === 'csv_tabular') return 'Tabular (Supported)';
+    if (kind === 'code_competition') return 'Code Competition (Report Only)';
+    if (kind === 'csv_cv') return 'Computer Vision (Report Only)';
+    if (kind === 'agent_or_optimization') return 'Agent Simulation (Report Only)';
+    return 'Custom Format (Report Only)';
+  };
 
   return (
     <div className="space-y-6">
@@ -81,7 +111,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">Overview</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Monitor competitions, experiments, and submission performance.
+            Competition classification, active target monitoring, and submission performance.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -94,7 +124,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
             Sync Competitions
           </button>
           <button
-            onClick={() => onNavigate('research', { slug: 'playground-series-s6e2' })}
+            onClick={() => onNavigate('research', { slug: activeCompetition })}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors"
           >
             <Search size={13} />
@@ -105,50 +135,154 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-sm transition-colors"
           >
             <Cpu size={13} />
-            View Execution Queue
+            Execution Queue
           </button>
         </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <MetricCard
-          label="Joined Competitions"
-          value={metrics?.joined_competitions ?? 0}
-          subValue={`${metrics?.supported_competitions ?? 0} tabular supported`}
-        />
-        <MetricCard
-          label="Active Research Runs"
-          value={metrics?.active_research_runs ?? 0}
-          subValue={metrics?.active_research_runs ? 'Processing task' : 'Queue idle'}
-        />
-        <MetricCard
-          label="Experiments Completed"
-          value={metrics?.experiments_completed ?? 0}
-          subValue="Audited in results.tsv"
-          mono
-        />
-        <MetricCard
-          label="Best Validation (CV)"
-          value={bestImp ? `${bestImp.current_value.toFixed(5)}` : 'N/A'}
-          mono
-          delta={
-            bestImp
-              ? {
-                  value: `${bestImp.delta >= 0 ? '+' : ''}${bestImp.delta.toFixed(5)}`,
-                  positive: bestImp.delta > 0,
-                  label: bestImp.metric_name,
-                }
-              : undefined
-          }
-          subValue={bestImp ? `Baseline: ${bestImp.original_value.toFixed(5)}` : undefined}
-        />
-        <MetricCard
-          label="Pending Submissions"
-          value={`${metrics?.pending_submissions ?? 5} / ${metrics?.daily_cap ?? 5}`}
-          subValue="Daily quota remaining"
-          mono
-        />
+      {/* Competition Classification Breakdown Section */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            Competition Inventory Classification
+          </span>
+          <button
+            onClick={() => onNavigate('competitions')}
+            className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
+          >
+            Browse in Competitions <ArrowRight size={12} />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          <div className="p-3 bg-white rounded-lg border border-slate-200 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-slate-900">Tabular ML</span>
+              <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-mono text-[10px] font-semibold">
+                Supported
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1">Standard CSV data, automated baseline & keep/revert</p>
+            <span className="text-xl font-bold font-mono text-slate-900 mt-2">
+              {classifications.tabular?.count || 0} <span className="text-xs font-normal text-slate-400">competitions</span>
+            </span>
+          </div>
+
+          <div className="p-3 bg-white rounded-lg border border-slate-200 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-slate-900">Code Competitions</span>
+              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-mono">
+                Report Only
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1">Offline kernels, submission notebook evaluation</p>
+            <span className="text-xl font-bold font-mono text-slate-900 mt-2">
+              {classifications.code_competition?.count || 0} <span className="text-xs font-normal text-slate-400">competitions</span>
+            </span>
+          </div>
+
+          <div className="p-3 bg-white rounded-lg border border-slate-200 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-slate-900">Agent Simulation</span>
+              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-mono">
+                Report Only
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1">Game environments, reinforcement learning & math agents</p>
+            <span className="text-xl font-bold font-mono text-slate-900 mt-2">
+              {classifications.agent_simulation?.count || 0} <span className="text-xs font-normal text-slate-400">competitions</span>
+            </span>
+          </div>
+
+          <div className="p-3 bg-white rounded-lg border border-slate-200 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-slate-900">Computer Vision</span>
+              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-mono">
+                Report Only
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-1">Image & volumetric CT segmentation datasets</p>
+            <span className="text-xl font-bold font-mono text-slate-900 mt-2">
+              {classifications.computer_vision?.count || 0} <span className="text-xs font-normal text-slate-400">competitions</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Target Competition Active Workbench Card */}
+      <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                Active Target:
+              </span>
+              <h2 className="text-base font-bold text-slate-900">
+                {target.title || target.slug}
+              </h2>
+              <span className="px-2 py-0.5 rounded bg-white border border-slate-200 font-mono text-[11px] text-slate-700">
+                {target.slug}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Classification: <span className="font-medium text-slate-700">{formatKindBadge(target.kind)}</span> | Metric: <span className="font-medium text-slate-700">{target.metric}</span> ({target.direction})
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleAction('baseline')}
+              disabled={Boolean(actionInProgress)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+            >
+              <Wrench size={13} />
+              Setup Baseline
+            </button>
+            <button
+              onClick={() => handleAction('research')}
+              disabled={Boolean(actionInProgress)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+            >
+              <Search size={13} />
+              Analyze Notebooks
+            </button>
+            <button
+              onClick={() => handleAction('experiment')}
+              disabled={Boolean(actionInProgress)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              <FlaskConical size={13} />
+              Run Experiments
+            </button>
+          </div>
+        </div>
+
+        {/* Target Key Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+          <MetricCard
+            label="My Best Leaderboard Score"
+            value={target.best_public_score ? target.best_public_score.toFixed(5) : 'Not scored'}
+            subValue="Verified on Kaggle"
+            mono
+          />
+          <MetricCard
+            label="Local 5-Fold Baseline (CV)"
+            value={target.baseline_cv ? target.baseline_cv.toFixed(5) : 'Not run'}
+            subValue={target.baseline_cv ? 'Stratified CV' : 'Click Setup Baseline'}
+            mono
+          />
+          <MetricCard
+            label="Target Experiments"
+            value={metrics?.target_experiments_count ?? 0}
+            subValue="Keep/revert trials"
+            mono
+          />
+          <MetricCard
+            label="Daily Submissions Quota"
+            value={`${target.quota_remaining ?? 5} / ${target.daily_cap ?? 5}`}
+            subValue="Remaining today"
+            mono
+          />
+        </div>
       </div>
 
       {/* Active Research Banner (if running) */}
@@ -184,7 +318,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
         </div>
       )}
 
-      {/* Grid: Competitions Activity & Experiments */}
+      {/* Grid: Competition Activity & Target Experiments */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Section: Competition Activity */}
         <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
@@ -201,44 +335,49 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
             </button>
           </div>
           <div className="divide-y divide-slate-100">
-            {competitions.length === 0 ? (
-              <div className="p-4 text-center text-xs text-slate-400">No competitions found.</div>
-            ) : (
-              competitions.map((comp) => (
-                <div
-                  key={comp.slug}
-                  onClick={() => onNavigate('competitions', { slug: comp.slug })}
-                  className="flex items-center justify-between p-3 hover:bg-slate-50/80 cursor-pointer transition-colors"
-                >
-                  <div className="flex flex-col min-w-0 pr-4">
+            {(data?.recent_competitions || []).map((comp: any) => (
+              <div
+                key={comp.slug}
+                onClick={() => onNavigate('competitions', { slug: comp.slug })}
+                className="flex items-center justify-between p-3 hover:bg-slate-50/80 cursor-pointer transition-colors"
+              >
+                <div className="flex flex-col min-w-0 pr-4">
+                  <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-slate-900 truncate">
                       {comp.title || comp.slug}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-mono">
-                      {comp.slug} • {comp.evaluation_metric || 'ROC AUC'}
-                    </span>
+                    {comp.slug === activeCompetition && (
+                      <span className="px-1.5 py-0.2 rounded bg-blue-100 text-blue-800 font-mono text-[9px] font-semibold">
+                        Target
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="text-right">
-                      <div className="text-xs font-mono font-medium text-slate-800">
-                        {comp.my_best_public_score ? comp.my_best_public_score.toFixed(5) : '—'}
-                      </div>
-                      <div className="text-[10px] text-slate-400 uppercase">Public Score</div>
-                    </div>
-                    <StatusBadge status={comp.status} size="sm" />
-                  </div>
+                  <span className="text-[11px] text-slate-400 font-mono mt-0.5">
+                    {comp.slug} • {comp.evaluation_metric || 'ROC AUC'}
+                  </span>
                 </div>
-              ))
-            )}
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="text-right">
+                    <div className="text-xs font-mono font-medium text-slate-800">
+                      {comp.my_best_public_score ? comp.my_best_public_score.toFixed(5) : '—'}
+                    </div>
+                    <div className="text-[10px] text-slate-400 uppercase font-mono">Public Score</div>
+                  </div>
+                  <StatusBadge status={comp.status} size="sm" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Section: Recent Experiments */}
+        {/* Section: Target Recent Experiments */}
         <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <FlaskConical size={16} className="text-slate-500" />
-              <h2 className="text-sm font-semibold text-slate-900">Recent Experiments</h2>
+              <h2 className="text-sm font-semibold text-slate-900">
+                Experiments for {target.slug}
+              </h2>
             </div>
             <button
               onClick={() => onNavigate('experiments')}
@@ -248,12 +387,12 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
             </button>
           </div>
           <div className="divide-y divide-slate-100">
-            {experiments.length === 0 ? (
-              <div className="p-4 text-center text-xs text-slate-400">
-                No experiments recorded yet. Click 'AutoResearch Loop' to start.
+            {(data?.recent_experiments || []).length === 0 ? (
+              <div className="p-6 text-center text-xs text-slate-400">
+                No experiments recorded yet for {target.slug}. Click 'Run Experiments' above to execute iterations.
               </div>
             ) : (
-              experiments.map((exp) => (
+              (data.recent_experiments || []).map((exp: any) => (
                 <div
                   key={exp.id}
                   onClick={() => onNavigate('experiments', { expId: exp.id })}
@@ -290,25 +429,29 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
         </div>
       </div>
 
-      {/* Section: Recent Submissions */}
+      {/* Section: Submissions */}
       <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <Send size={16} className="text-slate-500" />
-            <h2 className="text-sm font-semibold text-slate-900">Recent Leaderboard Submissions</h2>
+            <h2 className="text-sm font-semibold text-slate-900">
+              Leaderboard Submissions for {target.slug}
+            </h2>
           </div>
           <button
             onClick={() => onNavigate('submissions')}
             className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
           >
-            View Submissions <ArrowRight size={12} />
+            Submissions Workspace <ArrowRight size={12} />
           </button>
         </div>
         <div className="divide-y divide-slate-100">
-          {submissions.length === 0 ? (
-            <div className="p-4 text-center text-xs text-slate-400">No submissions recorded yet.</div>
+          {(data?.recent_submissions || []).length === 0 ? (
+            <div className="p-6 text-center text-xs text-slate-400">
+              No submissions recorded yet for {target.slug}.
+            </div>
           ) : (
-            submissions.map((sub) => (
+            (data.recent_submissions || []).map((sub: any) => (
               <div
                 key={sub.ref}
                 className="flex items-center justify-between p-3 hover:bg-slate-50/80 transition-colors"
@@ -336,7 +479,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
                     <div className="text-xs font-mono font-semibold text-emerald-700">
                       {sub.public_score ? sub.public_score.toFixed(5) : 'Pending'}
                     </div>
-                    <div className="text-[10px] text-slate-400 uppercase">Public Score</div>
+                    <div className="text-[10px] text-slate-400 uppercase font-mono">Public Score</div>
                   </div>
                   <StatusBadge status={sub.status || 'Scored'} size="sm" />
                 </div>

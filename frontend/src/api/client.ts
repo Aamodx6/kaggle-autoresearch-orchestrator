@@ -19,14 +19,19 @@ export const api = {
     return res.json();
   },
 
-  async getOverview(): Promise<{
-    metrics: OverviewMetrics;
-    active_research: QueueTask | null;
-    recent_competitions: CompetitionSummary[];
-    recent_experiments: ExperimentRecord[];
-    recent_submissions: SubmissionRecord[];
-  }> {
-    const res = await fetch(`${BASE_URL}/overview`);
+  async setActiveCompetition(slug: string): Promise<{ status: string; active_competition: string }> {
+    const res = await fetch(`${BASE_URL}/active_competition`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug }),
+    });
+    if (!res.ok) throw new Error('Failed to set active competition');
+    return res.json();
+  },
+
+  async getOverview(slug?: string): Promise<any> {
+    const url = slug ? `${BASE_URL}/overview?slug=${slug}` : `${BASE_URL}/overview`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to fetch overview data');
     return res.json();
   },

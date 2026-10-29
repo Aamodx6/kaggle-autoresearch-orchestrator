@@ -12,10 +12,25 @@ import { api } from '../api/client';
 import { MetricCard } from '../components/MetricCard';
 import { StatusBadge } from '../components/StatusBadge';
 
-export const LeaderboardHistoryPage: React.FC = () => {
-  const [slug, setSlug] = useState('playground-series-s6e2');
+interface LeaderboardHistoryPageProps {
+  activeCompetition?: string;
+}
+
+export const LeaderboardHistoryPage: React.FC<LeaderboardHistoryPageProps> = ({ activeCompetition }) => {
+  const [slug, setSlug] = useState(activeCompetition || 'playground-series-s6e2');
+  const [competitions, setCompetitions] = useState<any[]>([]);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.getCompetitions().then(setCompetitions).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (activeCompetition) {
+      setSlug(activeCompetition);
+    }
+  }, [activeCompetition]);
 
   const fetchHistory = async (targetSlug: string) => {
     setLoading(true);
@@ -49,11 +64,21 @@ export const LeaderboardHistoryPage: React.FC = () => {
             onChange={(e) => setSlug(e.target.value)}
             className="px-3 py-1.5 text-xs font-mono font-medium rounded-md border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
-            <option value="playground-series-s6e2">playground-series-s6e2</option>
-            <option value="playground-series-s5e12">playground-series-s5e12</option>
-            <option value="playground-series-s6e7">playground-series-s6e7</option>
-            <option value="playground-series-s6e8">playground-series-s6e8</option>
-            <option value="playground-series-s6e9">playground-series-s6e9</option>
+            {competitions.length > 0 ? (
+              competitions.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.slug} ({c.kind === 'csv_tabular' ? 'Tabular' : 'Report Only'})
+                </option>
+              ))
+            ) : (
+              <>
+                <option value="playground-series-s6e2">playground-series-s6e2 (Tabular)</option>
+                <option value="playground-series-s5e12">playground-series-s5e12 (Tabular)</option>
+                <option value="playground-series-s6e7">playground-series-s6e7 (Tabular)</option>
+                <option value="playground-series-s6e8">playground-series-s6e8 (Tabular)</option>
+                <option value="playground-series-s6e9">playground-series-s6e9 (Tabular)</option>
+              </>
+            )}
           </select>
           <button
             onClick={() => fetchHistory(slug)}

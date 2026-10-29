@@ -146,15 +146,27 @@ class ExecutionQueueManager:
 
 
 queue_manager = ExecutionQueueManager()
+DEFAULT_COMPETITION = "playground-series-s6e2"
+active_competition_slug: str = DEFAULT_COMPETITION
+
+class SetActiveCompRequest(BaseModel):
+    slug: str
+
+@app.post("/api/active_competition")
+def set_active_competition(req: SetActiveCompRequest):
+    global active_competition_slug
+    comp = registry.get_competition(req.slug)
+    if not comp:
+        raise HTTPException(status_code=404, detail=f"Competition '{req.slug}' not found.")
+    active_competition_slug = req.slug
+    return {"status": "success", "active_competition": active_competition_slug}
 
 # ---------------------------------------------------------
 # Status & Overview Endpoints
 # ---------------------------------------------------------
 @app.get("/api/status")
 def get_global_status():
-    active_comp = queue_manager.current_task.competition_slug if queue_manager.current_task else (
-        registry.list_competitions()[0]["slug"] if registry.list_competitions() else "None"
-    )
+    active_comp = queue_manager.current_task.competition_slug if queue_manager.current_task else active_competition_slug
     return {
         "state": queue_manager.global_state,
         "active_competition": active_comp,
@@ -171,34 +183,43 @@ def get_global_status():
 
 
 @app.get("/api/overview")
-def get_overview_data():
+def get_overview_data(slug: Optional[str] = None):
     comps = registry.list_competitions()
     total_comps = len(comps)
     supported_comps = [c for c in comps if c.get("status") == "supported"]
     
-    # Experiments metrics
+    # Classification categories breakdown
+    tabular_comps = [c for c in comps if c.get("kind") == "csv_tabular"]
+    code_comps = [c for c in comps if c.get("kind") == "code_competition"]
+    cv_comps = [c for c in comps if c.get("kind") == "csv_cv"]
+    agent_comps = [c for c in comps if c.get("kind") == "agent_or_optimization"]
+    other_comps = [c for c in comps if c.get("kind") not in ("csv_tabular", "code_competition", "csv_cv", "agent_or_optimization")]
+    
+    # Target competition scoping
+    target_slug = slug or active_competition_slug
+    target_comp = registry.get_competition(target_slug) or (comps[0] if comps else {})
+    target_slug = target_comp.get("slug", target_slug)
+
+    # Experiments metrics for target competition
+    target_exps = registry.list_experiments(target_slug) if target_slug else []
     all_exps = []
     for c in comps:
         all_exps.extend(registry.list_experiments(c["slug"]))
     
-    completed_exps = len(all_exps)
+    base_exp = next((e for e in target_exps if e.get("status") == "baseline"), None)
+    best_exp = max((e for e in target_exps if e.get("cv_mean") is not None), key=lambda x: x["cv_mean"], default=None)
     
-    # Best validation improvement calculation on primary comp (s6e2 or first)
-    primary_slug = "playground-series-s6e2" if any(c["slug"] == "playground-series-s6e2" for c in comps) else (comps[0]["slug"] if comps else "")
-    primary_exps = registry.list_experiments(primary_slug) if primary_slug else []
-    base_exp = next((e for e in primary_exps if e.get("status") == "baseline"), None)
-    best_exp = max((e for e in primary_exps if e.get("cv_mean") is not None), key=lambda x: x["cv_mean"], default=None)
-    
-    base_val = base_exp["cv_mean"] if base_exp else 0.95438
+    base_val = base_exp["cv_mean"] if base_exp else (target_comp.get("my_best_public_score") or 0.0)
     curr_val = best_exp["cv_mean"] if best_exp else base_val
     diff = curr_val - base_val
     
-    # Pending submissions / quotas
-    primary_budget = registry.get_budget(primary_slug) if primary_slug else {}
-    daily_cap = config.get_daily_cap(primary_slug) if primary_slug else 5
-    submissions_today = primary_budget.get("submissions_today", 0)
+    # Target competition budget & quota
+    target_budget = registry.get_budget(target_slug) if target_slug else {}
+    daily_cap = config.get_daily_cap(target_slug) if target_slug else 5
+    submissions_today = target_budget.get("submissions_today", 0)
     
-    # Recent submissions
+    # Target competition submissions
+    target_subs = registry.list_submissions(target_slug) if target_slug else []
     all_subs = []
     for c in comps:
         all_subs.extend(registry.list_submissions(c["slug"]))
@@ -210,15 +231,36 @@ def get_overview_data():
         active_info = queue_manager.current_task.to_dict()
 
     return {
+        "target_competition": {
+            "slug": target_slug,
+            "title": target_comp.get("title", target_slug),
+            "kind": target_comp.get("kind", "csv_tabular"),
+            "category": target_comp.get("category", "Playground"),
+            "metric": target_comp.get("evaluation_metric", "ROC AUC"),
+            "direction": target_comp.get("direction", "maximize"),
+            "best_public_score": target_comp.get("my_best_public_score"),
+            "baseline_cv": base_val,
+            "daily_cap": daily_cap,
+            "submissions_today": submissions_today,
+            "quota_remaining": max(0, daily_cap - submissions_today),
+        },
+        "classifications": {
+            "tabular": {"label": "Tabular", "count": len(tabular_comps), "status": "Supported"},
+            "code_competition": {"label": "Code Competition", "count": len(code_comps), "status": "Report Only"},
+            "computer_vision": {"label": "Computer Vision", "count": len(cv_comps), "status": "Report Only"},
+            "agent_simulation": {"label": "Agent Simulation", "count": len(agent_comps), "status": "Report Only"},
+            "other": {"label": "Custom Format", "count": len(other_comps), "status": "Report Only"},
+        },
         "metrics": {
             "joined_competitions": total_comps,
             "supported_competitions": len(supported_comps),
             "active_research_runs": 1 if queue_manager.current_task else 0,
-            "experiments_completed": completed_exps,
+            "experiments_completed": len(all_exps),
+            "target_experiments_count": len(target_exps),
             "best_validation_improvement": {
-                "competition": primary_slug,
-                "metric_name": "ROC AUC",
-                "direction": "maximize",
+                "competition": target_slug,
+                "metric_name": target_comp.get("evaluation_metric", "ROC AUC"),
+                "direction": target_comp.get("direction", "maximize"),
                 "original_value": round(base_val, 5),
                 "current_value": round(curr_val, 5),
                 "delta": round(diff, 5),
@@ -230,8 +272,8 @@ def get_overview_data():
         },
         "active_research": active_info,
         "recent_competitions": comps[:6],
-        "recent_experiments": all_exps[-5:] if all_exps else [],
-        "recent_submissions": all_subs[:5] if all_subs else [],
+        "recent_experiments": target_exps if target_exps else all_exps[-5:],
+        "recent_submissions": target_subs if target_subs else all_subs[:5],
     }
 
 
