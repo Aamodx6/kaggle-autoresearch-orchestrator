@@ -58,7 +58,7 @@ export const LeaderboardHistoryPage: React.FC<LeaderboardHistoryPageProps> = ({ 
             Historical public score trajectory and correlation with local validation metrics.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <select
             value={slug}
             onChange={(e) => setSlug(e.target.value)}

@@ -117,7 +117,7 @@ export const SubmissionsPage: React.FC<SubmissionsPageProps> = ({ activeCompetit
       </div>
 
       {/* Scope / Filter Bar */}
-      <div className="flex items-center justify-between gap-4 bg-white p-3 rounded-lg border border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-lg border border-slate-200">
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500 font-medium">Competition Filter:</span>
           <select

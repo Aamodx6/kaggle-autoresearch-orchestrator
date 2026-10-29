@@ -85,7 +85,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ activeCompetition 
 
       {/* Filter Tabs & Competition Scope */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setFilterType('all')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
@@ -118,7 +118,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ activeCompetition 
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-slate-400 font-medium">Scope:</span>
           <select
             value={compFilter}
@@ -167,7 +167,7 @@ export const ArtifactsPage: React.FC<ArtifactsPageProps> = ({ activeCompetition 
                 filtered.map((art) => (
                   <tr key={art.path} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-2.5 px-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <FileText size={15} className="text-slate-400 shrink-0" />
                         <span className="font-mono font-semibold text-slate-900">
                           {art.name}

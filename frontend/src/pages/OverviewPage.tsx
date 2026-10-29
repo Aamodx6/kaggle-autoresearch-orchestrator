@@ -114,7 +114,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             Competition classification, active target monitoring, and submission performance.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleSync}
             disabled={syncing}
@@ -153,7 +153,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             Browse in Competitions <ArrowRight size={12} />
           </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
           <div className="p-3 bg-white rounded-lg border border-slate-200 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-slate-900">Tabular ML</span>
@@ -212,7 +212,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
       <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                 Active Target:
               </span>
@@ -228,7 +228,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => handleAction('baseline')}
               disabled={Boolean(actionInProgress)}
@@ -257,7 +257,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         </div>
 
         {/* Target Key Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
           <MetricCard
             label="My Best Leaderboard Score"
             value={target.best_public_score ? target.best_public_score.toFixed(5) : 'Not scored'}
@@ -294,7 +294,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                 <FlaskConical size={16} />
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-sm font-semibold text-slate-900">{activeResearch.name}</h3>
                   <StatusBadge status={activeResearch.stage} size="sm" />
                 </div>
@@ -323,7 +323,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         {/* Section: Competition Activity */}
         <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Trophy size={16} className="text-slate-500" />
               <h2 className="text-sm font-semibold text-slate-900">Competition Activity</h2>
             </div>
@@ -342,7 +342,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                 className="flex items-center justify-between p-3 hover:bg-slate-50/80 cursor-pointer transition-colors"
               >
                 <div className="flex flex-col min-w-0 pr-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-semibold text-slate-900 truncate">
                       {comp.title || comp.slug}
                     </span>
@@ -373,7 +373,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
         {/* Section: Target Recent Experiments */}
         <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <FlaskConical size={16} className="text-slate-500" />
               <h2 className="text-sm font-semibold text-slate-900">
                 Experiments for {target.slug}
@@ -399,7 +399,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                   className="flex items-center justify-between p-3 hover:bg-slate-50/80 cursor-pointer transition-colors"
                 >
                   <div className="flex flex-col min-w-0 pr-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs font-mono font-semibold text-slate-700">
                         #{exp.id}
                       </span>
@@ -432,7 +432,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
       {/* Section: Submissions */}
       <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Send size={16} className="text-slate-500" />
             <h2 className="text-sm font-semibold text-slate-900">
               Leaderboard Submissions for {target.slug}
@@ -457,7 +457,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
                 className="flex items-center justify-between p-3 hover:bg-slate-50/80 transition-colors"
               >
                 <div className="flex flex-col min-w-0 pr-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-mono font-semibold text-slate-700">
                       Ref #{sub.ref}
                     </span>

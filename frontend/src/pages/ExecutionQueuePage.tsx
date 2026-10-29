@@ -62,7 +62,7 @@ export const ExecutionQueuePage: React.FC = () => {
             Monitor background autonomous tasks, queue status, and real-time execution logs.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-mono text-slate-700">
             <Cpu size={13} className="text-blue-600" />
             <span>Capacity:</span>

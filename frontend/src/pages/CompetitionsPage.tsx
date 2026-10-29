@@ -298,7 +298,7 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
         </div>
 
         {/* Dropdown Filters & View Controls */}
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Status Dropdown */}
           <select
             value={statusFilter}
@@ -624,7 +624,7 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
               </div>
 
               {/* Tabs Navigation */}
-              <div className="flex border-b border-slate-200 gap-4 text-xs font-medium">
+              <div className="flex border-b border-slate-200 gap-4 text-xs font-medium overflow-x-auto whitespace-nowrap scrollbar-none">
                 {(['summary', 'research', 'solutions', 'experiments', 'submissions', 'artifacts'] as const).map(
                   (tab) => (
                     <button
@@ -645,7 +645,7 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
               {/* Tab 1: Summary */}
               {detailsTab === 'summary' && (
                 <div className="space-y-4 text-xs">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="p-3 bg-slate-50 rounded border border-slate-200">
                       <span className="text-slate-400 font-medium">Evaluation Metric</span>
                       <p className="font-semibold text-slate-800 mt-1">

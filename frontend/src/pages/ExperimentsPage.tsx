@@ -109,7 +109,7 @@ export const ExperimentsPage: React.FC<ExperimentsPageProps> = ({
             Keep/revert optimization loop evaluated against fold cross-validation noise floor.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Competition Filter */}
           <select
             value={selectedCompFilter}
@@ -254,7 +254,7 @@ export const ExperimentsPage: React.FC<ExperimentsPageProps> = ({
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                   Cross-Validation Gate & Evaluation
                 </span>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <span className="text-slate-400">Baseline Score:</span>
                     <p className="font-mono font-semibold text-slate-800 mt-0.5">

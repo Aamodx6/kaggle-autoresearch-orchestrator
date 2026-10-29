@@ -60,6 +60,8 @@ export const App: React.FC = () => {
     }
   };
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
     await Promise.all([fetchGlobalStatus(), fetchCompetitions()]);
@@ -69,6 +71,7 @@ export const App: React.FC = () => {
   const handleNavigate = (page: string, params?: any) => {
     setActivePage(page);
     setNavParams(params || null);
+    setMobileMenuOpen(false);
     if (params?.slug) {
       handleSelectCompetition(params.slug);
     }
@@ -76,12 +79,14 @@ export const App: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#f8fafc] text-slate-900 font-sans">
-      {/* Persistent Left Sidebar */}
+      {/* Persistent Left Sidebar (Desktop) / Slide-over Drawer (Mobile) */}
       <Sidebar
         activePage={activePage}
         onNavigate={handleNavigate}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(!collapsed)}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
         accountInfo={status?.account}
       />
 
@@ -96,10 +101,11 @@ export const App: React.FC = () => {
           onOpenQueue={() => handleNavigate('queue')}
           onRefresh={handleManualRefresh}
           isRefreshing={isRefreshing}
+          onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         />
 
         {/* Scrollable Main Content Container */}
-        <main className="flex-1 overflow-y-auto px-6 py-6 max-w-7xl w-full mx-auto">
+        <main className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6 max-w-7xl w-full mx-auto">
           {activePage === 'overview' && (
             <OverviewPage
               activeCompetition={activeCompetition}

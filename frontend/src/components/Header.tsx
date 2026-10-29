@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, Clock, Activity, ChevronDown, Check } from 'lucide-react';
+import { RefreshCw, Clock, Activity, ChevronDown, Check, Menu } from 'lucide-react';
 import type { GlobalStatus, CompetitionSummary } from '../types';
 import { StatusBadge } from './StatusBadge';
 
@@ -11,6 +11,7 @@ interface HeaderProps {
   onOpenQueue: () => void;
   onRefresh: () => void;
   isRefreshing: boolean;
+  onToggleMobileMenu?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -21,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenQueue,
   onRefresh,
   isRefreshing,
+  onToggleMobileMenu,
 }) => {
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
@@ -68,22 +70,33 @@ export const Header: React.FC<HeaderProps> = ({
   );
 
   return (
-    <header className="flex h-14 w-full items-center justify-between border-b border-slate-200 bg-white px-6 z-20">
-      {/* Left: Global Execution Status & Target Competition Selector */}
-      <div className="flex items-center gap-3">
+    <header className="flex h-14 w-full items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-6 z-20 shrink-0">
+      {/* Left: Mobile Toggle, Execution Status & Target Selector */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        {/* Mobile Hamburger Menu Button */}
+        {onToggleMobileMenu && (
+          <button
+            onClick={onToggleMobileMenu}
+            className="p-1.5 -ml-1 rounded-md text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors md:hidden shrink-0"
+            aria-label="Open navigation menu"
+          >
+            <Menu size={18} />
+          </button>
+        )}
+
         {/* Execution State Pill */}
         <button
           onClick={onOpenQueue}
-          className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 transition-all text-xs"
+          className="flex items-center gap-1.5 sm:gap-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 px-2 sm:px-3 py-1.5 transition-all text-xs shrink-0"
           title="Click to view full execution queue and live task logs"
         >
-          <span className="font-semibold text-slate-500 uppercase tracking-wider text-[10px]">
+          <span className="hidden sm:inline font-semibold text-slate-500 uppercase tracking-wider text-[10px]">
             System:
           </span>
           <StatusBadge status={status?.state || 'Idle'} size="sm" />
 
           {status?.queued_tasks_count ? (
-            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-mono text-[11px] font-semibold">
+            <span className="ml-0.5 sm:ml-1 px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-mono text-[10px] sm:text-[11px] font-semibold">
               +{status.queued_tasks_count}
             </span>
           ) : null}
@@ -93,24 +106,24 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-3 py-1.5 transition-all text-xs"
+            className="flex items-center gap-1.5 sm:gap-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-2 sm:px-3 py-1.5 transition-all text-xs min-w-0"
             title="Switch active target competition"
           >
-            <span className="text-slate-400 font-medium">Target:</span>
-            <div className="flex items-center gap-1.5">
-              <span className="font-mono font-semibold text-slate-900 max-w-[200px] truncate">
+            <span className="hidden sm:inline text-slate-400 font-medium">Target:</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="font-mono font-semibold text-slate-900 max-w-[100px] sm:max-w-[160px] md:max-w-[200px] truncate">
                 {currentComp.slug}
               </span>
-              <span className="px-1.5 py-0.2 rounded bg-slate-100 text-[10px] font-medium text-slate-600">
+              <span className="hidden md:inline-block px-1.5 py-0.2 rounded bg-slate-100 text-[10px] font-medium text-slate-600">
                 {formatKindBadge(currentComp.kind)}
               </span>
             </div>
-            <ChevronDown size={13} className="text-slate-400 ml-0.5" />
+            <ChevronDown size={13} className="text-slate-400 ml-0.5 shrink-0" />
           </button>
 
           {/* Dropdown Menu */}
           {dropdownOpen && (
-            <div className="absolute left-0 mt-1.5 w-88 bg-white rounded-lg border border-slate-200 shadow-xl overflow-hidden py-1 z-50 text-xs">
+            <div className="absolute left-0 mt-1.5 w-[calc(100vw-1.5rem)] max-w-sm sm:w-96 bg-white rounded-lg border border-slate-200 shadow-xl overflow-hidden py-1 z-50 text-xs">
               <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
                 <span className="font-semibold text-[11px] text-slate-500 uppercase tracking-wider">
                   Target Competition Selector
@@ -285,7 +298,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {status?.current_stage && status.current_stage !== 'Idle' && (
-          <span className="text-xs text-slate-500 flex items-center gap-1">
+          <span className="hidden lg:flex text-xs text-slate-500 items-center gap-1">
             <Activity size={12} className="text-blue-500" />
             Stage: <span className="font-medium text-slate-700">{status.current_stage}</span>
           </span>
@@ -293,11 +306,11 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Right: Sync time & Manual Refresh */}
-      <div className="flex items-center gap-4 text-xs text-slate-500">
+      <div className="flex items-center gap-2 sm:gap-4 text-xs text-slate-500 shrink-0">
         <div className="flex items-center gap-1.5">
-          <Clock size={13} className="text-slate-400" />
-          <span>Last sync:</span>
-          <span className="font-mono text-slate-700">{formatTime(status?.last_sync_time)}</span>
+          <Clock size={13} className="text-slate-400 shrink-0" />
+          <span className="hidden sm:inline">Last sync:</span>
+          <span className="font-mono text-slate-700 text-[11px] sm:text-xs">{formatTime(status?.last_sync_time)}</span>
         </div>
 
         <button

@@ -98,7 +98,7 @@ export const ResearchPage: React.FC<ResearchPageProps> = ({
             Discover, rank, and extract competitive feature engineering and modeling techniques.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <select
             value={slug}
             onChange={(e) => handleSelectChange(e.target.value)}
