@@ -1,0 +1,30 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.pytest_cache/
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Sensitive credentials & secrets
+.kaggle/
+*kaggle.json
+*access_token*
+*.env
+*.pem
+*.key
+
+# Data and large artifacts
+data/
+*.zip
+*.tar.gz
+workspaces/**/data/
+workspaces/**/cache/
+workspaces/**/models/*.pth
+workspaces/**/models/*.bin

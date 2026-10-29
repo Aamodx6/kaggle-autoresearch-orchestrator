@@ -1,0 +1,27 @@
+budgets:
+  experiment_timeout_seconds: 300
+  max_experiments_per_run: 5
+  patience_experiments: 3
+  memory_limit_mb: 4096
+
+daily_caps:
+  default: 5
+  playground-series-s6e2: 5
+
+paths:
+  registry_db: "registry.db"
+  workspaces_dir: "workspaces"
+  research_dir: "research"
+  evidence_dir: "evidence"
+  reports_dir: "reports"
+
+cv:
+  n_splits: 5
+  seed: 42
+
+noise_gate:
+  use_cv_std: true
+  min_improvement_epsilon: 0.0002
+
+modes:
+  default: "dry-run"
