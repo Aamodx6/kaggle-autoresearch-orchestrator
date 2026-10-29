@@ -3,6 +3,7 @@
 import asyncio
 import datetime
 from pathlib import Path
+import re
 import threading
 import time
 from typing import Any, Dict, List, Optional
@@ -26,6 +27,35 @@ from orch.researcher import PublicResearcher
 from orch.submitter import SubmissionManager, SubmissionOutcome
 from orch.validator import SubmissionValidator
 from orch.workspace import WorkspaceManager
+
+
+def agent_error(status_code: int, code: str, message: str, hint: str, action: str) -> HTTPException:
+    """Format an agent-ready error following gstack /plan-devex-review specifications."""
+    return HTTPException(
+        status_code=status_code,
+        detail={
+            "error_code": code,
+            "message": message,
+            "hint": hint,
+            "suggested_action": action,
+        },
+    )
+
+
+def sanitize_slug(slug: Optional[str]) -> str:
+    """CSO Security Guard: Prevent directory traversal or invalid characters in competition slugs."""
+    if not slug:
+        return "playground-series-s6e2"
+    clean = slug.strip()
+    if not re.match(r"^[a-zA-Z0-9_\-\.]+$", clean) or ".." in clean or "/" in clean or "\\" in clean:
+        raise agent_error(
+            status_code=400,
+            code="INVALID_COMPETITION_SLUG",
+            message=f"Invalid or unsafe competition slug: '{slug}'",
+            hint="Slugs may only contain alphanumeric characters, hyphens, underscores, and dots without path separators.",
+            action="Select a valid competition from /api/competitions.",
+        )
+    return clean
 
 
 app = FastAPI(title="Kaggle AutoResearch Orchestrator API", version="1.0.0")
@@ -155,10 +185,17 @@ class SetActiveCompRequest(BaseModel):
 @app.post("/api/active_competition")
 def set_active_competition(req: SetActiveCompRequest):
     global active_competition_slug
-    comp = registry.get_competition(req.slug)
+    clean_slug = sanitize_slug(req.slug)
+    comp = registry.get_competition(clean_slug)
     if not comp:
-        raise HTTPException(status_code=404, detail=f"Competition '{req.slug}' not found.")
-    active_competition_slug = req.slug
+        raise agent_error(
+            status_code=404,
+            code="COMPETITION_NOT_FOUND",
+            message=f"Competition '{clean_slug}' not found in registry.",
+            hint="The competition has not been discovered or registered yet.",
+            action="Run 'orch discover' or call POST /api/actions/sync_competitions to discover entered competitions.",
+        )
+    active_competition_slug = clean_slug
     return {"status": "success", "active_competition": active_competition_slug}
 
 # ---------------------------------------------------------
@@ -318,14 +355,21 @@ def list_competitions(search: Optional[str] = None, kind: Optional[str] = None, 
 
 @app.get("/api/competitions/{slug}")
 def get_competition_details(slug: str):
-    comp = registry.get_competition(slug)
+    clean_slug = sanitize_slug(slug)
+    comp = registry.get_competition(clean_slug)
     if not comp:
-        raise HTTPException(status_code=404, detail=f"Competition '{slug}' not found in registry.")
+        raise agent_error(
+            status_code=404,
+            code="COMPETITION_NOT_FOUND",
+            message=f"Competition '{clean_slug}' not found in registry.",
+            hint="Check that the competition slug matches an entered Kaggle competition.",
+            action="Call GET /api/competitions to see all registered competitions.",
+        )
 
     # Details
-    exps = registry.list_experiments(slug)
-    subs = registry.list_submissions(slug)
-    notebooks = registry.list_notebooks(slug)
+    exps = registry.list_experiments(clean_slug)
+    subs = registry.list_submissions(clean_slug)
+    notebooks = registry.list_notebooks(clean_slug)
     
     # Dataset info
     data_dir = Path("workspaces") / slug / "data"
@@ -431,7 +475,13 @@ def get_experiment_details(exp_id: int):
             break
 
     if not target_exp:
-        raise HTTPException(status_code=404, detail=f"Experiment ID {exp_id} not found.")
+        raise agent_error(
+            status_code=404,
+            code="EXPERIMENT_NOT_FOUND",
+            message=f"Experiment ID #{exp_id} not found.",
+            hint="The requested experiment id does not exist in any registered competition.",
+            action="Call GET /api/experiments to see all valid experiment IDs.",
+        )
 
     # Build rich details
     baseline_score = 0.95438
@@ -544,12 +594,19 @@ def list_submissions(slug: Optional[str] = None):
 
 @app.get("/api/leaderboard/{slug}")
 def get_leaderboard_history(slug: str):
-    comp = registry.get_competition(slug)
+    clean_slug = sanitize_slug(slug)
+    comp = registry.get_competition(clean_slug)
     if not comp:
-        raise HTTPException(status_code=404, detail="Competition not found")
+        raise agent_error(
+            status_code=404,
+            code="COMPETITION_NOT_FOUND",
+            message=f"Competition '{clean_slug}' not found in registry.",
+            hint="Cannot fetch leaderboard for an unregistered competition.",
+            action="Call GET /api/competitions to see entered competitions.",
+        )
     
-    subs = registry.list_submissions(slug)
-    exps = registry.list_experiments(slug)
+    subs = registry.list_submissions(clean_slug)
+    exps = registry.list_experiments(clean_slug)
     base_exp = next((e for e in exps if e.get("status") == "baseline"), None)
     
     # Sort submissions chronologically
@@ -596,7 +653,13 @@ def get_queue():
 def cancel_queue_task(task_id: str):
     cancelled = queue_manager.cancel_task(task_id)
     if not cancelled:
-        raise HTTPException(status_code=404, detail="Task not found or already finished.")
+        raise agent_error(
+            status_code=404,
+            code="TASK_NOT_FOUND_OR_FINISHED",
+            message=f"Task '{task_id}' not found or already finished.",
+            hint="Active tasks can only be cancelled while in 'queued' or 'running' state.",
+            action="Call GET /api/queue to inspect active and pending tasks.",
+        )
     return {"status": "success", "message": f"Task {task_id} cancelled."}
 
 
@@ -755,10 +818,16 @@ def action_run_experiment(req: ActionRequest):
 
 @app.post("/api/actions/validate_submission")
 def action_validate_submission(req: ActionRequest):
-    slug = req.competition_slug or "playground-series-s6e2"
+    slug = sanitize_slug(req.competition_slug)
     sub_file_path = Path("workspaces") / slug / "artifacts" / "final_submission.csv"
     if not sub_file_path.exists():
-        raise HTTPException(status_code=400, detail=f"No final submission file found at {sub_file_path}. Run Baseline first.")
+        raise agent_error(
+            status_code=400,
+            code="SUBMISSION_CANDIDATE_MISSING",
+            message=f"No final submission file found at {sub_file_path}.",
+            hint="A candidate submission must be generated before running pre-flight verification.",
+            action=f"Run 'Setup Baseline' or 'Run Experiments' for {slug} to produce a submission artifact.",
+        )
 
     sm = SubmissionManager(slug, connector, registry, config)
     outcome = sm.process_submission(sub_file_path, cv_score=0.95438, submit=False)
@@ -775,12 +844,24 @@ def action_validate_submission(req: ActionRequest):
 @app.post("/api/actions/submit_candidate")
 def action_submit_candidate(req: ActionRequest):
     if not req.authorize:
-        raise HTTPException(status_code=400, detail="Explicit user authorization required before live submission.")
+        raise agent_error(
+            status_code=400,
+            code="AUTHORIZATION_REQUIRED",
+            message="Explicit user authorization required before live submission.",
+            hint="Live submissions consume your daily Kaggle quota (5/day) and cannot be automated without confirmation.",
+            action="Check the 'I understand this counts toward daily submission quota' box before submitting.",
+        )
     
-    slug = req.competition_slug or "playground-series-s6e2"
+    slug = sanitize_slug(req.competition_slug)
     sub_file_path = Path("workspaces") / slug / "artifacts" / "final_submission.csv"
     if not sub_file_path.exists():
-        raise HTTPException(status_code=400, detail=f"No candidate file found at {sub_file_path}")
+        raise agent_error(
+            status_code=400,
+            code="SUBMISSION_CANDIDATE_MISSING",
+            message=f"No candidate file found at {sub_file_path}.",
+            hint="Cannot submit a non-existent candidate file.",
+            action=f"Generate a submission file for {slug} first.",
+        )
 
     def execute_submit(task: TaskItem):
         task.logs.append(f"Submitting {sub_file_path.name} to Kaggle competition '{slug}'...")

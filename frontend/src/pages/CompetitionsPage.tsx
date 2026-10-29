@@ -20,6 +20,13 @@ import {
 import { api } from '../api/client';
 import type { CompetitionSummary } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
+import {
+  formatCategory,
+  formatKind,
+  formatReward,
+  formatDeadline,
+  formatBytes,
+} from '../utils/formatters';
 
 interface CompetitionsPageProps {
   activeCompetition: string;
@@ -116,54 +123,6 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
       console.error(err);
     } finally {
       setActionInProgress(null);
-    }
-  };
-
-  // Helper formatting functions
-  const formatCategory = (cat?: string) => {
-    if (!cat) return 'General';
-    if (cat.toLowerCase().includes('playground')) return 'Playground Series';
-    if (cat.toLowerCase().includes('research')) return 'Research';
-    if (cat.toLowerCase().includes('featured')) return 'Featured';
-    if (cat.toLowerCase().includes('getting')) return 'Getting Started';
-    return cat;
-  };
-
-  const formatKind = (kind?: string) => {
-    if (!kind) return 'Standard';
-    if (kind === 'csv_tabular') return 'Tabular';
-    if (kind === 'code_competition') return 'Code Competition';
-    if (kind === 'csv_cv') return 'Computer Vision';
-    if (kind === 'agent_or_optimization') return 'Agent Simulation';
-    return kind.replace('_', ' ');
-  };
-
-  const formatReward = (reward?: string) => {
-    if (!reward || reward.toLowerCase() === 'none') return 'Knowledge';
-    if (reward.toLowerCase() === 'swag') return 'Swag / Badges';
-    if (!reward.includes('$') && reward.toLowerCase().includes('usd')) {
-      return `$${reward.toUpperCase()}`;
-    }
-    return reward;
-  };
-
-  const formatDeadline = (deadlineStr?: string) => {
-    if (!deadlineStr) return { text: 'Ongoing', isPast: false };
-    try {
-      const date = new Date(deadlineStr);
-      const now = new Date();
-      const diffDays = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      
-      if (diffDays < 0) {
-        return { text: `Ended ${date.toLocaleDateString([], { month: 'short', year: 'numeric' })}`, isPast: true };
-      }
-      if (diffDays < 30) {
-        return { text: `${diffDays} days remaining`, isPast: false };
-      }
-      const months = Math.ceil(diffDays / 30);
-      return { text: `${months} months remaining`, isPast: false };
-    } catch {
-      return { text: deadlineStr.split(' ')[0], isPast: false };
     }
   };
 
@@ -558,7 +517,7 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
                             <span className="font-mono font-medium text-slate-900">{a.name}</span>
                           </div>
                           <div className="flex items-center gap-4 text-slate-500 font-mono text-xs">
-                            <span>{(a.size_bytes / 1024).toFixed(1)} KB</span>
+                            <span>{formatBytes(a.size_bytes)}</span>
                             <span>{a.created_at.split('T')[0]}</span>
                           </div>
                         </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { RefreshCw, Clock, Activity, ChevronDown, Check, Menu } from 'lucide-react';
 import type { GlobalStatus, CompetitionSummary } from '../types';
+import { formatKindBadge } from '../utils/formatters';
 import { StatusBadge } from './StatusBadge';
 
 interface HeaderProps {
@@ -51,14 +52,6 @@ export const Header: React.FC<HeaderProps> = ({
     slug: activeCompetition || 'playground-series-s6e2',
     title: activeCompetition || 'playground-series-s6e2',
     kind: 'csv_tabular',
-  };
-
-  const formatKindBadge = (kind?: string) => {
-    if (kind === 'csv_tabular') return 'Tabular (Supported)';
-    if (kind === 'code_competition') return 'Code Competition';
-    if (kind === 'csv_cv') return 'Computer Vision';
-    if (kind === 'agent_or_optimization') return 'Simulation & Agent';
-    return 'Other';
   };
 
   // Group competitions by modality

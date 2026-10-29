@@ -12,11 +12,34 @@ import type {
 
 const BASE_URL = '/api';
 
+/**
+ * Handle API responses with agent-ready error parsing.
+ * Formats errors cleanly from both string and structured error objects.
+ */
+async function handleResponse<T>(res: Response, fallbackError: string): Promise<T> {
+  if (res.ok) {
+    return res.json();
+  }
+  let errorMsg = fallbackError;
+  try {
+    const errorData = await res.json();
+    if (errorData?.detail) {
+      if (typeof errorData.detail === 'object') {
+        errorMsg = errorData.detail.message || errorData.detail.hint || JSON.stringify(errorData.detail);
+      } else {
+        errorMsg = errorData.detail;
+      }
+    }
+  } catch {
+    // keep fallback
+  }
+  throw new Error(errorMsg);
+}
+
 export const api = {
   async getStatus(): Promise<GlobalStatus> {
     const res = await fetch(`${BASE_URL}/status`);
-    if (!res.ok) throw new Error('Failed to fetch status');
-    return res.json();
+    return handleResponse<GlobalStatus>(res, 'Failed to fetch status');
   },
 
   async setActiveCompetition(slug: string): Promise<{ status: string; active_competition: string }> {
@@ -25,15 +48,13 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ slug }),
     });
-    if (!res.ok) throw new Error('Failed to set active competition');
-    return res.json();
+    return handleResponse(res, 'Failed to set active competition');
   },
 
   async getOverview(slug?: string): Promise<any> {
     const url = slug ? `${BASE_URL}/overview?slug=${slug}` : `${BASE_URL}/overview`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed to fetch overview data');
-    return res.json();
+    return handleResponse(res, 'Failed to fetch overview data');
   },
 
   async getCompetitions(params?: { search?: string; kind?: string; status?: string }): Promise<CompetitionSummary[]> {
@@ -42,14 +63,12 @@ export const api = {
     if (params?.kind) query.append('kind', params.kind);
     if (params?.status) query.append('status', params.status);
     const res = await fetch(`${BASE_URL}/competitions?${query.toString()}`);
-    if (!res.ok) throw new Error('Failed to fetch competitions');
-    return res.json();
+    return handleResponse<CompetitionSummary[]>(res, 'Failed to fetch competitions');
   },
 
   async getCompetitionDetails(slug: string): Promise<any> {
     const res = await fetch(`${BASE_URL}/competitions/${slug}`);
-    if (!res.ok) throw new Error(`Failed to fetch details for ${slug}`);
-    return res.json();
+    return handleResponse(res, `Failed to fetch details for ${slug}`);
   },
 
   async getResearch(slug: string): Promise<{
@@ -59,41 +78,35 @@ export const api = {
     synthesis_markdown: string;
   }> {
     const res = await fetch(`${BASE_URL}/research/${slug}`);
-    if (!res.ok) throw new Error(`Failed to fetch research for ${slug}`);
-    return res.json();
+    return handleResponse(res, `Failed to fetch research for ${slug}`);
   },
 
   async getExperiments(slug?: string): Promise<ExperimentRecord[]> {
     const url = slug ? `${BASE_URL}/experiments?slug=${slug}` : `${BASE_URL}/experiments`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed to fetch experiments');
-    return res.json();
+    return handleResponse<ExperimentRecord[]>(res, 'Failed to fetch experiments');
   },
 
   async getExperimentDetails(id: number): Promise<any> {
     const res = await fetch(`${BASE_URL}/experiments/${id}`);
-    if (!res.ok) throw new Error(`Failed to fetch experiment ${id}`);
-    return res.json();
+    return handleResponse(res, `Failed to fetch experiment #${id}`);
   },
 
   async getArtifacts(slug?: string): Promise<ArtifactRecord[]> {
     const url = slug ? `${BASE_URL}/artifacts?slug=${slug}` : `${BASE_URL}/artifacts`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed to fetch artifacts');
-    return res.json();
+    return handleResponse<ArtifactRecord[]>(res, 'Failed to fetch artifacts');
   },
 
   async getSubmissions(slug?: string): Promise<SubmissionRecord[]> {
     const url = slug ? `${BASE_URL}/submissions?slug=${slug}` : `${BASE_URL}/submissions`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error('Failed to fetch submissions');
-    return res.json();
+    return handleResponse<SubmissionRecord[]>(res, 'Failed to fetch submissions');
   },
 
   async getLeaderboard(slug: string): Promise<any> {
     const res = await fetch(`${BASE_URL}/leaderboard/${slug}`);
-    if (!res.ok) throw new Error(`Failed to fetch leaderboard for ${slug}`);
-    return res.json();
+    return handleResponse(res, `Failed to fetch leaderboard for ${slug}`);
   },
 
   async getQueue(): Promise<{
@@ -103,27 +116,23 @@ export const api = {
     concurrency: { active_workers: number; max_workers: number };
   }> {
     const res = await fetch(`${BASE_URL}/queue`);
-    if (!res.ok) throw new Error('Failed to fetch queue');
-    return res.json();
+    return handleResponse(res, 'Failed to fetch queue');
   },
 
   async cancelTask(taskId: string): Promise<any> {
     const res = await fetch(`${BASE_URL}/queue/cancel/${taskId}`, { method: 'POST' });
-    if (!res.ok) throw new Error('Failed to cancel task');
-    return res.json();
+    return handleResponse(res, 'Failed to cancel task');
   },
 
   async getSettings(): Promise<SettingsData> {
     const res = await fetch(`${BASE_URL}/settings`);
-    if (!res.ok) throw new Error('Failed to fetch settings');
-    return res.json();
+    return handleResponse<SettingsData>(res, 'Failed to fetch settings');
   },
 
   // Actions
   async syncCompetitions(): Promise<{ status: string; task_id: string }> {
     const res = await fetch(`${BASE_URL}/actions/sync_competitions`, { method: 'POST' });
-    if (!res.ok) throw new Error('Failed to trigger competition sync');
-    return res.json();
+    return handleResponse(res, 'Failed to trigger competition sync');
   },
 
   async runResearch(slug: string): Promise<{ status: string; task_id: string }> {
@@ -132,8 +141,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ competition_slug: slug }),
     });
-    if (!res.ok) throw new Error('Failed to start research task');
-    return res.json();
+    return handleResponse(res, 'Failed to start research task');
   },
 
   async runBaseline(slug: string): Promise<{ status: string; task_id: string }> {
@@ -142,8 +150,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ competition_slug: slug }),
     });
-    if (!res.ok) throw new Error('Failed to start baseline task');
-    return res.json();
+    return handleResponse(res, 'Failed to start baseline task');
   },
 
   async runExperiment(slug: string): Promise<{ status: string; task_id: string }> {
@@ -152,8 +159,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ competition_slug: slug }),
     });
-    if (!res.ok) throw new Error('Failed to start experiment loop');
-    return res.json();
+    return handleResponse(res, 'Failed to start experiment loop');
   },
 
   async validateSubmission(slug: string): Promise<any> {
@@ -162,11 +168,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ competition_slug: slug }),
     });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || 'Validation failed');
-    }
-    return res.json();
+    return handleResponse(res, 'Validation failed');
   },
 
   async submitCandidate(slug: string, authorize: boolean, message?: string): Promise<any> {
@@ -175,10 +177,6 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ competition_slug: slug, authorize, message }),
     });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || 'Live submission failed');
-    }
-    return res.json();
+    return handleResponse(res, 'Live submission failed');
   },
 };

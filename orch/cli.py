@@ -21,6 +21,92 @@ from orch.workspace import WorkspaceManager
 logger = get_logger("orch.cli")
 
 
+def run_doctor_mode(config, connector, registry):
+    """Diagnose environment, authentication, hardware, and workspace readiness."""
+    import shutil
+    import subprocess
+    print("\n" + "=" * 65)
+    print("  Kaggle AutoResearch Orchestrator — System Diagnostic (Doctor)")
+    print("=" * 65)
+
+    checks_passed = 0
+    total_checks = 6
+
+    # 1. Python & Virtual Environment
+    py_ver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    print(f"\n[1/6] Python Runtime: v{py_ver}")
+    if sys.version_info >= (3, 10):
+        print("      PASS: Python version meets requirement (>= 3.10)")
+        checks_passed += 1
+    else:
+        print("      FAIL: Python >= 3.10 required.")
+
+    # 2. Kaggle CLI & Authentication
+    print("\n[2/6] Kaggle Authentication & CLI:")
+    auth_ok, username = connector.authenticate()
+    if auth_ok:
+        print(f"      PASS: Authenticated as Kaggle user '{username}'")
+        checks_passed += 1
+    else:
+        print("      WARN: Kaggle token missing or expired (~/.kaggle/access_token)")
+
+    # 3. GPU & Acceleration
+    print("\n[3/6] Hardware Acceleration (Compute):")
+    try:
+        import torch
+        if torch.cuda.is_available():
+            dev_name = torch.cuda.get_device_name(0)
+            mem = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+            print(f"      PASS: CUDA GPU detected: {dev_name} ({mem:.1f} GB VRAM)")
+            checks_passed += 1
+        else:
+            print("      INFO: CUDA not detected, using CPU fallback.")
+            checks_passed += 1
+    except ImportError:
+        print("      INFO: PyTorch not in environment, tree models running on CPU/OpenMP.")
+        checks_passed += 1
+
+    # 4. SQLite Registry Database
+    print("\n[4/6] SQLite Registry Database:")
+    db_path = Path(config.paths.registry_db)
+    if db_path.exists():
+        comps = registry.list_competitions()
+        subs = registry.list_submissions()
+        print(f"      PASS: {db_path} accessible ({len(comps)} competitions, {len(subs)} submissions)")
+        checks_passed += 1
+    else:
+        print(f"      WARN: Database not initialized at {db_path}. Will initialize on first run.")
+
+    # 5. Git Worktree / Sandbox Support
+    print("\n[5/6] Git Repository & Worktrees:")
+    git_bin = shutil.which("git")
+    if git_bin:
+        try:
+            res = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, check=True)
+            print("      PASS: Git binary present and active repository verified.")
+            checks_passed += 1
+        except Exception:
+            print("      WARN: Not inside a valid git repository.")
+    else:
+        print("      FAIL: Git binary not found in PATH.")
+
+    # 6. Web UI Static Assets
+    print("\n[6/6] Web UI Production Bundle:")
+    static_index = Path("orch/static/index.html")
+    static_assets = Path("orch/static/assets")
+    if static_index.exists() and static_assets.exists() and any(static_assets.glob("*.js")):
+        js_count = len(list(static_assets.glob("*.js")))
+        print(f"      PASS: UI production assets present ({js_count} JS chunks)")
+        checks_passed += 1
+    else:
+        print("      WARN: UI static bundle missing in orch/static. Build with: cd frontend && npm run build")
+
+    print("\n" + "-" * 65)
+    print(f"Diagnostic Summary: {checks_passed}/{total_checks} checks passed.")
+    print("=" * 65 + "\n")
+    return checks_passed == total_checks
+
+
 def run_discover_mode(config, connector, registry, incremental: bool = True):
     logger.info("Running mode: DISCOVER")
     discovery = DiscoveryService(connector, registry, config)
@@ -164,7 +250,7 @@ def main():
     )
     parser.add_argument(
         "mode",
-        choices=["discover", "research", "submit", "full", "ui"],
+        choices=["discover", "research", "submit", "full", "ui", "doctor"],
         help="Operational mode",
     )
 
@@ -217,6 +303,8 @@ def main():
         run_full_pipeline(args.competition, config, connector, registry, submit=submit_flag)
     elif args.mode == "ui":
         run_ui_mode()
+    elif args.mode == "doctor":
+        run_doctor_mode(config, connector, registry)
 
 
 

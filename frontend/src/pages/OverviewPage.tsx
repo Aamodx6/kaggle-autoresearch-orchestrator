@@ -18,6 +18,7 @@ import { api } from '../api/client';
 import type { OverviewMetrics, CompetitionSummary, ExperimentRecord, SubmissionRecord, QueueTask } from '../types';
 import { MetricCard } from '../components/MetricCard';
 import { StatusBadge } from '../components/StatusBadge';
+import { formatKindBadge } from '../utils/formatters';
 
 interface OverviewPageProps {
   activeCompetition: string;
@@ -95,14 +96,6 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
   const activeResearch = data?.active_research;
   const classifications = data?.classifications || {};
   const bestImp = metrics?.best_validation_improvement;
-
-  const formatKindBadge = (kind?: string) => {
-    if (kind === 'csv_tabular') return 'Tabular (Supported)';
-    if (kind === 'code_competition') return 'Code Competition (Report Only)';
-    if (kind === 'csv_cv') return 'Computer Vision (Report Only)';
-    if (kind === 'agent_or_optimization') return 'Agent Simulation (Report Only)';
-    return 'Custom Format (Report Only)';
-  };
 
   return (
     <div className="space-y-6">

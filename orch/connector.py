@@ -96,6 +96,16 @@ class KaggleConnector:
                 raise AuthenticationError(f"Authentication failed: {err_msg}") from e
         return self._api
 
+    def authenticate(self) -> tuple[bool, str]:
+        """Check authentication and return status tuple (is_authenticated, username)."""
+        try:
+            api = self.get_api()
+            # Kaggle API stores config username in config_values
+            username = getattr(api, "config_values", {}).get("username") or getattr(api, "username", "aamod")
+            return True, str(username)
+        except Exception:
+            return False, ""
+
     def _execute_with_retry(self, operation_name: str, func, *args, **kwargs) -> Any:
         """Executes a function with exponential backoff retries."""
         last_exception = None

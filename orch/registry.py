@@ -223,13 +223,18 @@ class Registry:
         finally:
             conn.close()
 
-    def list_submissions(self, competition_slug: str) -> List[Dict[str, Any]]:
+    def list_submissions(self, competition_slug: Optional[str] = None) -> List[Dict[str, Any]]:
         conn = self._get_connection()
         try:
-            rows = conn.execute(
-                "SELECT * FROM submissions WHERE competition_slug = ? ORDER BY date DESC",
-                (competition_slug,),
-            ).fetchall()
+            if competition_slug:
+                rows = conn.execute(
+                    "SELECT * FROM submissions WHERE competition_slug = ? ORDER BY date DESC",
+                    (competition_slug,),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM submissions ORDER BY date DESC"
+                ).fetchall()
             return [dict(r) for r in rows]
         finally:
             conn.close()
@@ -309,13 +314,18 @@ class Registry:
         finally:
             conn.close()
 
-    def list_experiments(self, competition_slug: str) -> List[Dict[str, Any]]:
+    def list_experiments(self, competition_slug: Optional[str] = None) -> List[Dict[str, Any]]:
         conn = self._get_connection()
         try:
-            rows = conn.execute(
-                "SELECT * FROM experiments WHERE competition_slug = ? ORDER BY id ASC",
-                (competition_slug,),
-            ).fetchall()
+            if competition_slug:
+                rows = conn.execute(
+                    "SELECT * FROM experiments WHERE competition_slug = ? ORDER BY id ASC",
+                    (competition_slug,),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM experiments ORDER BY id ASC"
+                ).fetchall()
             return [dict(r) for r in rows]
         finally:
             conn.close()
