@@ -1,6 +1,6 @@
 # Stage 1: Registry + Discovery Evidence
 
-**Total Entered Competitions Discovered:** 18  
+**Total Entered Competitions Discovered:** 20  
 **Registry Database:** `registry.db` (SQLite)  
 
 ---
@@ -21,9 +21,11 @@
 | `playground-series-s6e9` | `csv_tabular` | `supported` | Roc Auc Score | maximize | 0.94657 | 2026-09-30 |
 | `kaggriculture` | `other` | `blocked: submissions disabled` | kaggriculture | maximize | 2493.10000 | 2026-10-14 |
 | `rsna-knee-abnormality-detection` | `code_competition` | `report_only` | Roc Auc Score | maximize | 0.95800 | 2026-10-22 |
+| `playground-series-s6e10` | `csv_tabular` | `supported` | Roc Auc Score | maximize | 0.96217 | 2026-10-31 |
 | `arc-prize-2026-arc-agi-3` | `code_competition` | `report_only` | ARC-AGI-3 Metric | maximize | 26.73000 | 2026-11-02 |
 | `enveda-CASMI26-molecule-id-mass-spectra` | `code_competition` | `report_only` | CASMI: Mean Average Precision | maximize | 0.45600 | 2026-12-14 |
 | `the-pokemon-company-ptcg-ai-battle-challenge-playground` | `agent_or_optimization` | `report_only` | cabt_bo3 | maximize | None | 2027-01-08 |
+| `name-that-llm` | `code_competition` | `report_only` | Balanced Accuracy Score | maximize | None | 2027-01-14 |
 | `google-verifiable-quantum-circuit-compilation` | `agent_or_optimization` | `report_only` | Google Quantum AI Metric | maximize | 1.16626 | 2027-01-20 |
 | `squares-in-squares` | `agent_or_optimization` | `report_only` | Squares in Squares | maximize | 22.26200 | 2027-07-18 |
 | `connectx` | `agent_or_optimization` | `report_only` | Connect X | maximize | 900.50000 | 2030-01-01 |
@@ -41,3 +43,4 @@
 - **`playground-series-s6e7`** (csv_tabular): Metric `Balanced Accuracy Score` (maximize), Best Baseline: `0.95113`
 - **`playground-series-s6e8`** (csv_tabular): Metric `Roc Auc Score` (maximize), Best Baseline: `0.97129`
 - **`playground-series-s6e9`** (csv_tabular): Metric `Roc Auc Score` (maximize), Best Baseline: `0.94657`
+- **`playground-series-s6e10`** (csv_tabular): Metric `Roc Auc Score` (maximize), Best Baseline: `0.96217`

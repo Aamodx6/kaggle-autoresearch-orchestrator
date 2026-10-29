@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Search,
-  Filter,
   RefreshCw,
   Trophy,
-  ArrowRight,
   ExternalLink,
-  BookOpen,
-  FlaskConical,
-  Layers,
-  Send,
-  CheckCircle2,
-  AlertTriangle,
-  Play,
-  FileText,
   Clock,
+  ArrowRight,
+  LayoutGrid,
+  List as ListIcon,
+  Tag,
+  Award,
+  Calendar,
+  CheckCircle2,
+  FileText,
+  Wrench,
+  FlaskConical,
 } from 'lucide-react';
 import { api } from '../api/client';
 import type { CompetitionSummary } from '../types';
@@ -35,9 +35,16 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
   const [competitions, setCompetitions] = useState<CompetitionSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  
+  // Kaggle-style filter states
+  const [categoryTab, setCategoryTab] = useState<string>('all');
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [kindFilter, setKindFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [formatFilter, setFormatFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'deadline' | 'score' | 'title'>('deadline');
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
+
+  // Modal inspection state
   const [selectedComp, setSelectedComp] = useState<string | null>(initialSlug || null);
   const [compDetails, setCompDetails] = useState<any>(null);
   const [detailsTab, setDetailsTab] = useState<'summary' | 'research' | 'solutions' | 'experiments' | 'submissions' | 'artifacts'>('summary');
@@ -46,11 +53,7 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
 
   const fetchCompetitions = async () => {
     try {
-      const data = await api.getCompetitions({
-        search: search || undefined,
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        kind: kindFilter !== 'all' ? kindFilter : undefined,
-      });
+      const data = await api.getCompetitions();
       setCompetitions(data);
     } catch (err) {
       console.error(err);
@@ -61,7 +64,7 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
 
   useEffect(() => {
     fetchCompetitions();
-  }, [search, statusFilter, kindFilter]);
+  }, []);
 
   const loadCompDetails = async (slug: string) => {
     setLoadingDetails(true);
@@ -112,14 +115,120 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
     }
   };
 
+  // Helper formatting functions
+  const formatCategory = (cat?: string) => {
+    if (!cat) return 'General';
+    if (cat.toLowerCase().includes('playground')) return 'Playground Series';
+    if (cat.toLowerCase().includes('research')) return 'Research';
+    if (cat.toLowerCase().includes('featured')) return 'Featured';
+    if (cat.toLowerCase().includes('getting')) return 'Getting Started';
+    return cat;
+  };
+
+  const formatKind = (kind?: string) => {
+    if (!kind) return 'Standard';
+    if (kind === 'csv_tabular') return 'Tabular';
+    if (kind === 'code_competition') return 'Code Competition';
+    if (kind === 'csv_cv') return 'Computer Vision';
+    if (kind === 'agent_or_optimization') return 'Agent Simulation';
+    return kind.replace('_', ' ');
+  };
+
+  const formatReward = (reward?: string) => {
+    if (!reward || reward.toLowerCase() === 'none') return 'Knowledge';
+    if (reward.toLowerCase() === 'swag') return 'Swag / Badges';
+    if (!reward.includes('$') && reward.toLowerCase().includes('usd')) {
+      return `$${reward.toUpperCase()}`;
+    }
+    return reward;
+  };
+
+  const formatDeadline = (deadlineStr?: string) => {
+    if (!deadlineStr) return { text: 'Ongoing', isPast: false };
+    try {
+      const date = new Date(deadlineStr);
+      const now = new Date();
+      const diffDays = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 0) {
+        return { text: `Ended ${date.toLocaleDateString([], { month: 'short', year: 'numeric' })}`, isPast: true };
+      }
+      if (diffDays < 30) {
+        return { text: `${diffDays} days remaining`, isPast: false };
+      }
+      const months = Math.ceil(diffDays / 30);
+      return { text: `${months} months remaining`, isPast: false };
+    } catch {
+      return { text: deadlineStr.split(' ')[0], isPast: false };
+    }
+  };
+
+  // Filter & Sort competitions
+  const filteredCompetitions = useMemo(() => {
+    return competitions
+      .filter((c) => {
+        // Category tab filter
+        if (categoryTab !== 'all') {
+          const cat = (c.category || '').toLowerCase();
+          if (!cat.includes(categoryTab.toLowerCase())) return false;
+        }
+
+        // Search filter
+        if (search) {
+          const s = search.toLowerCase();
+          const matchTitle = (c.title || '').toLowerCase().includes(s);
+          const matchSlug = c.slug.toLowerCase().includes(s);
+          const matchMetric = (c.evaluation_metric || '').toLowerCase().includes(s);
+          if (!matchTitle && !matchSlug && !matchMetric) return false;
+        }
+
+        // Status filter (Active vs Completed)
+        if (statusFilter !== 'all') {
+          const dl = formatDeadline(c.deadline);
+          if (statusFilter === 'active' && dl.isPast) return false;
+          if (statusFilter === 'completed' && !dl.isPast) return false;
+        }
+
+        // Format filter
+        if (formatFilter !== 'all') {
+          if (formatFilter === 'tabular' && c.kind !== 'csv_tabular') return false;
+          if (formatFilter === 'code' && c.kind !== 'code_competition') return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'score') {
+          return (b.my_best_public_score || 0) - (a.my_best_public_score || 0);
+        }
+        if (sortBy === 'title') {
+          return (a.title || a.slug).localeCompare(b.title || b.slug);
+        }
+        // Default: deadline (active first, then soonest)
+        const dateA = a.deadline ? new Date(a.deadline).getTime() : 0;
+        const dateB = b.deadline ? new Date(b.deadline).getTime() : 0;
+        return dateB - dateA;
+      });
+  }, [competitions, categoryTab, search, statusFilter, formatFilter, sortBy]);
+
+  // Category counts
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: competitions.length };
+    competitions.forEach((c) => {
+      const cat = c.category || 'Other';
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    return counts;
+  }, [competitions]);
+
   return (
     <div className="space-y-6">
-      {/* Page Header */}
+      {/* Top Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-slate-200">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight">Competitions</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Central inventory of all competitions entered by your Kaggle account.
+            Explore entered Kaggle competitions, view formats, and inspect local solution workbenches.
           </p>
         </div>
         <button
@@ -132,139 +241,315 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
         </button>
       </div>
 
-      {/* Filter and Search Controls */}
+      {/* Kaggle Category Navigation Tabs (Pills) */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200">
+        {[
+          { id: 'all', label: 'All Competitions' },
+          { id: 'playground', label: 'Playground Series' },
+          { id: 'featured', label: 'Featured' },
+          { id: 'research', label: 'Research' },
+          { id: 'getting started', label: 'Getting Started' },
+        ].map((tab) => {
+          const isActive = categoryTab === tab.id;
+          const count =
+            tab.id === 'all'
+              ? competitions.length
+              : competitions.filter((c) => (c.category || '').toLowerCase().includes(tab.id)).length;
+
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setCategoryTab(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
+                isActive
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                  isActive ? 'bg-slate-700 text-slate-200' : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Kaggle Filters & Search Bar Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        {/* Search Input */}
         <div className="relative flex-1 max-w-md">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by slug or competition title..."
+            placeholder="Search competitions, titles, or metrics..."
             className="w-full pl-9 pr-3 py-1.5 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Status Filter */}
+        {/* Dropdown Filters & View Controls */}
+        <div className="flex items-center gap-2 overflow-x-auto">
+          {/* Status Dropdown */}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
             className="px-2.5 py-1.5 text-xs rounded-md border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="all">All Statuses</option>
-            <option value="supported">Supported (csv_*)</option>
-            <option value="report_only">Report Only</option>
+            <option value="active">Active Only</option>
+            <option value="completed">Completed Only</option>
           </select>
 
-          {/* Task Type Filter */}
+          {/* Format Dropdown */}
           <select
-            value={kindFilter}
-            onChange={(e) => setKindFilter(e.target.value)}
+            value={formatFilter}
+            onChange={(e) => setFormatFilter(e.target.value)}
             className="px-2.5 py-1.5 text-xs rounded-md border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
-            <option value="all">All Task Types</option>
-            <option value="csv_tabular">Tabular (csv_tabular)</option>
-            <option value="code_competition">Code Competition</option>
-            <option value="csv_cv">Computer Vision</option>
-            <option value="agent_or_optimization">Agent / Optimization</option>
+            <option value="all">All Formats</option>
+            <option value="tabular">Tabular</option>
+            <option value="code">Code Competition</option>
           </select>
+
+          {/* Sort By Dropdown */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="px-2.5 py-1.5 text-xs rounded-md border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="deadline">Sort by Deadline</option>
+            <option value="score">Sort by My Best Score</option>
+            <option value="title">Sort by Title</option>
+          </select>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center rounded-md border border-slate-200 bg-white p-0.5">
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`p-1 rounded ${
+                viewMode === 'cards' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-700'
+              }`}
+              title="Grid Cards"
+            >
+              <LayoutGrid size={14} />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-1 rounded ${
+                viewMode === 'list' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-700'
+              }`}
+              title="List View"
+            >
+              <ListIcon size={14} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Competitions Table */}
-      <div className="rounded-lg border border-slate-200 bg-white overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-medium">
-              <tr>
-                <th className="py-2.5 px-3">Competition</th>
-                <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3">Task Type</th>
-                <th className="py-2.5 px-3">Evaluation Metric</th>
-                <th className="py-2.5 px-3 text-right">Best Validation (CV)</th>
-                <th className="py-2.5 px-3 text-right">Best Public Score</th>
-                <th className="py-2.5 px-3">Research</th>
-                <th className="py-2.5 px-3">Deadline</th>
-                <th className="py-2.5 px-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={9} className="py-8 text-center text-slate-400">
-                    <RefreshCw className="h-5 w-5 animate-spin mx-auto text-slate-400" />
-                  </td>
-                </tr>
-              ) : competitions.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="py-8 text-center text-slate-400">
-                    No matching competitions found.
-                  </td>
-                </tr>
-              ) : (
-                competitions.map((c) => (
-                  <tr
-                    key={c.slug}
-                    onClick={() => loadCompDetails(c.slug)}
-                    className="hover:bg-slate-50/80 cursor-pointer transition-colors"
-                  >
-                    <td className="py-2.5 px-3">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-slate-900 font-mono">
-                          {c.slug}
-                        </span>
-                        {c.title && c.title !== c.slug && (
-                          <span className="text-[11px] text-slate-500 truncate max-w-xs">
-                            {c.title}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <StatusBadge status={c.status} size="sm" />
-                    </td>
-                    <td className="py-2.5 px-3 font-mono text-slate-600">
-                      {c.kind || 'N/A'}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className="font-medium text-slate-700">
-                        {c.evaluation_metric || 'ROC AUC'}
-                      </span>
-                      <span className="text-[10px] text-slate-400 ml-1">
-                        ({c.direction || 'maximize'})
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-mono font-medium text-slate-800">
-                      {c.best_validation_score ? c.best_validation_score.toFixed(5) : '—'}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-mono font-medium text-emerald-700">
-                      {c.my_best_public_score ? c.my_best_public_score.toFixed(5) : '—'}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <StatusBadge status={c.research_status || 'Pending'} size="sm" />
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-500">
-                      {c.deadline ? c.deadline.split('T')[0] : 'Open'}
-                    </td>
-                    <td className="py-2.5 px-3 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          loadCompDetails(c.slug);
-                        }}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800"
-                      >
-                        Inspect <ArrowRight size={12} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Main Competitions Content */}
+      {loading ? (
+        <div className="flex h-64 items-center justify-center">
+          <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
         </div>
-      </div>
+      ) : filteredCompetitions.length === 0 ? (
+        <div className="p-12 text-center bg-white rounded-lg border border-slate-200 text-slate-400">
+          <p className="text-sm font-medium text-slate-600">No competitions found</p>
+          <p className="text-xs text-slate-400 mt-1">
+            Try adjusting your search criteria or category filter.
+          </p>
+        </div>
+      ) : viewMode === 'cards' ? (
+        /* KAGGLE-STYLE CARDS GRID */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredCompetitions.map((comp) => {
+            const deadlineInfo = formatDeadline(comp.deadline);
+            const isTabular = comp.kind === 'csv_tabular';
+            const categoryText = formatCategory(comp.category);
+            const rewardText = formatReward(comp.reward);
+
+            return (
+              <div
+                key={comp.slug}
+                onClick={() => loadCompDetails(comp.slug)}
+                className="group flex flex-col justify-between p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm cursor-pointer transition-all"
+              >
+                <div>
+                  {/* Card Header: Avatar & Category Pill */}
+                  <div className="flex items-start justify-between gap-3 mb-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 border border-slate-200 text-slate-800 font-bold text-xs uppercase shrink-0">
+                        {comp.slug.substring(0, 2)}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                          {categoryText}
+                        </span>
+                        <h3 className="font-semibold text-sm text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                          {comp.title || comp.slug}
+                        </h3>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description / Slug */}
+                  <p className="font-mono text-[11px] text-slate-500 mb-3 truncate">
+                    {comp.slug}
+                  </p>
+
+                  {/* Metadata Tags Pill Row */}
+                  <div className="flex flex-wrap items-center gap-1.5 mb-4 text-[11px]">
+                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">
+                      {formatKind(comp.kind)}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                      {comp.evaluation_metric || 'ROC AUC'}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-medium">
+                      {rewardText}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card Footer: Standing & Actions */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <div>
+                    {comp.my_best_public_score ? (
+                      <div className="flex items-center gap-1 text-emerald-700 font-semibold font-mono">
+                        <CheckCircle2 size={12} />
+                        <span>Score: {comp.my_best_public_score.toFixed(5)}</span>
+                      </div>
+                    ) : comp.best_validation_score ? (
+                      <div className="font-mono text-slate-700 font-medium">
+                        CV: {comp.best_validation_score.toFixed(5)}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 font-medium">Not evaluated</span>
+                    )}
+                    <span className="text-[10px] text-slate-400 block mt-0.5">
+                      {deadlineInfo.text}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        loadCompDetails(comp.slug);
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors"
+                    >
+                      Workspace <ArrowRight size={11} />
+                    </button>
+                    {comp.url && (
+                      <a
+                        href={comp.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                        title="View on Kaggle"
+                      >
+                        <ExternalLink size={13} />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* KAGGLE-STYLE LIST VIEW */
+        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm divide-y divide-slate-100">
+          {filteredCompetitions.map((comp) => {
+            const deadlineInfo = formatDeadline(comp.deadline);
+            const categoryText = formatCategory(comp.category);
+            const rewardText = formatReward(comp.reward);
+
+            return (
+              <div
+                key={comp.slug}
+                onClick={() => loadCompDetails(comp.slug)}
+                className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-slate-50/80 cursor-pointer transition-colors gap-3"
+              >
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 border border-slate-200 text-slate-800 font-bold text-xs uppercase shrink-0 mt-0.5">
+                    {comp.slug.substring(0, 2)}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-sm text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                        {comp.title || comp.slug}
+                      </h3>
+                      <span className="px-1.5 py-0.2 rounded bg-slate-100 text-[10px] font-medium text-slate-600">
+                        {categoryText}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
+                      <span className="font-mono">{comp.slug}</span>
+                      <span>•</span>
+                      <span>Format: {formatKind(comp.kind)}</span>
+                      <span>•</span>
+                      <span>Metric: {comp.evaluation_metric || 'ROC AUC'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0 text-xs">
+                  <div className="text-right">
+                    <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-medium inline-block mb-1 text-[11px]">
+                      {rewardText}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block font-mono">
+                      {deadlineInfo.text}
+                    </span>
+                  </div>
+
+                  <div className="text-right">
+                    {comp.my_best_public_score ? (
+                      <div>
+                        <span className="font-mono font-semibold text-emerald-700 block">
+                          {comp.my_best_public_score.toFixed(5)}
+                        </span>
+                        <span className="text-[10px] text-slate-400 uppercase font-mono">
+                          Public Score
+                        </span>
+                      </div>
+                    ) : comp.best_validation_score ? (
+                      <div>
+                        <span className="font-mono font-semibold text-slate-800 block">
+                          {comp.best_validation_score.toFixed(5)}
+                        </span>
+                        <span className="text-[10px] text-slate-400 uppercase font-mono">
+                          Local CV
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-400">Not run</span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      loadCompDetails(comp.slug);
+                    }}
+                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors"
+                  >
+                    Workspace <ArrowRight size={12} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Dedicated Competition Details Modal */}
       {selectedComp && (
@@ -274,8 +559,8 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
             setSelectedComp(null);
             setCompDetails(null);
           }}
-          title={selectedComp}
-          subtitle="Competition Workspace & Automated Pipeline Details"
+          title={compDetails?.summary?.title || selectedComp}
+          subtitle={`Slug: ${selectedComp} | Format: ${formatKind(compDetails?.summary?.kind)}`}
           maxWidth="4xl"
         >
           {loadingDetails || !compDetails ? (
@@ -287,9 +572,11 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
               {/* Top Quick Actions Bar inside Modal */}
               <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                 <div className="flex items-center gap-2">
-                  <StatusBadge status={compDetails.summary.status} />
+                  <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-xs font-medium text-slate-700">
+                    {formatCategory(compDetails.summary.category)}
+                  </span>
                   <span className="text-xs font-mono text-slate-500">
-                    Kind: {compDetails.summary.kind}
+                    Metric: {compDetails.summary.evaluation_metric || 'ROC AUC'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -361,9 +648,9 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
                       </p>
                     </div>
                     <div className="p-3 bg-slate-50 rounded border border-slate-200">
-                      <span className="text-slate-400 font-medium">Max Daily Submissions</span>
-                      <p className="font-mono text-slate-800 mt-1">
-                        {compDetails.summary.max_daily_submissions || 5} per day
+                      <span className="text-slate-400 font-medium">Reward / Prize</span>
+                      <p className="font-semibold text-amber-800 mt-1">
+                        {formatReward(compDetails.summary.reward)}
                       </p>
                     </div>
                   </div>
@@ -394,7 +681,7 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
                 <div className="space-y-4 text-xs">
                   {compDetails.public_research.notebooks.length === 0 ? (
                     <div className="p-6 text-center text-slate-400 border rounded-lg">
-                      No public research notebooks mined yet. Click 'Mine Research' above.
+                      No public research notebooks mined yet. Click 'Analyze Notebooks' above.
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -436,11 +723,15 @@ export const CompetitionsPage: React.FC<CompetitionsPageProps> = ({
                     <div className="grid grid-cols-2 gap-3 pt-2">
                       <div className="p-2.5 bg-white border rounded">
                         <span className="text-slate-400">Baseline 5-Fold Mean CV:</span>
-                        <p className="font-mono font-semibold text-slate-900 mt-0.5">0.95438 (±0.00039)</p>
+                        <p className="font-mono font-semibold text-slate-900 mt-0.5">
+                          {compDetails.summary.best_validation_score ? compDetails.summary.best_validation_score.toFixed(5) : '0.95438 (±0.00039)'}
+                        </p>
                       </div>
                       <div className="p-2.5 bg-white border rounded">
                         <span className="text-slate-400">Public Leaderboard Baseline:</span>
-                        <p className="font-mono font-semibold text-emerald-700 mt-0.5">0.95408</p>
+                        <p className="font-mono font-semibold text-emerald-700 mt-0.5">
+                          {compDetails.summary.my_best_public_score ? compDetails.summary.my_best_public_score.toFixed(5) : '0.95408'}
+                        </p>
                       </div>
                     </div>
                   </div>

@@ -1,9 +1,9 @@
 # Stage 3: Public Research Evidence
 
-**Competition:** `playground-series-s5e12`  
-**Synthesized Research Artifact:** `research/playground-series-s5e12.md`  
+**Competition:** `playground-series-s6e2`  
+**Synthesized Research Artifact:** `research/playground-series-s6e2.md`  
 
-# Competitive Research Analysis: `playground-series-s5e12`
+# Competitive Research Analysis: `playground-series-s6e2`
 
 ## 1. Executive Summary
 Analyzed top 4 public Kaggle notebooks by community votes and recency. Note: public scores on the Kaggle API kernels view were unexposed; notebooks were prioritized by vote count and verified domain relevance.
@@ -14,10 +14,10 @@ Analyzed top 4 public Kaggle notebooks by community votes and recency. Note: pub
 
 | Notebook Reference | Author | Votes | Primary Models | CV Strategy | Ensembling | License |
 |---|---|---|---|---|---|---|
-| [`masayakawamata/s5e12-eda-xgb-competition-starter`](https://www.kaggle.com/code/masayakawamata/s5e12-eda-xgb-competition-starter) | `masayakawamata` | 274 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
-| [`anthonytherrien/ps-s5e12-blend`](https://www.kaggle.com/code/anthonytherrien/ps-s5e12-blend) | `anthonytherrien` | 139 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
-| [`wind1234it/s5e12-1st-place-solution-hc-ridge`](https://www.kaggle.com/code/wind1234it/s5e12-1st-place-solution-hc-ridge) | `wind1234it` | 118 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
-| [`kdmitrie/pgs512-xgb-lgb-ydf-tabm-ag-fe-cv-optuna`](https://www.kaggle.com/code/kdmitrie/pgs512-xgb-lgb-ydf-tabm-ag-fe-cv-optuna) | `kdmitrie` | 101 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
+| [`kospintr/heart-xgb-lightgbm-catb-baseline-k-fold`](https://www.kaggle.com/code/kospintr/heart-xgb-lightgbm-catb-baseline-k-fold) | `kospintr` | 149 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
+| [`omidbaghchehsaraei/the-best-solo-model-so-far-realmlp-lb-0-95397`](https://www.kaggle.com/code/omidbaghchehsaraei/the-best-solo-model-so-far-realmlp-lb-0-95397) | `omidbaghchehsaraei` | 140 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
+| [`azzamradman/0226-blend-the-blender-do-it-the-hard-way`](https://www.kaggle.com/code/azzamradman/0226-blend-the-blender-do-it-the-hard-way) | `azzamradman` | 95 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
+| [`rattans/logistic-regression-ps-s6e2`](https://www.kaggle.com/code/rattans/logistic-regression-ps-s6e2) | `rattans` | 92 | Standard Classifier | 5-Fold Stratified K-Fold | None (Single Model) | Apache 2.0 / Kaggle Open Code License |
 
 ---
 

@@ -211,11 +211,11 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate, onOpenQu
                   className="flex items-center justify-between p-3 hover:bg-slate-50/80 cursor-pointer transition-colors"
                 >
                   <div className="flex flex-col min-w-0 pr-4">
-                    <span className="text-xs font-semibold text-slate-900 truncate font-mono">
-                      {comp.slug}
+                    <span className="text-xs font-semibold text-slate-900 truncate">
+                      {comp.title || comp.slug}
                     </span>
-                    <span className="text-[11px] text-slate-400">
-                      Metric: {comp.evaluation_metric || 'ROC AUC'} ({comp.direction || 'maximize'})
+                    <span className="text-[11px] text-slate-400 font-mono">
+                      {comp.slug} • {comp.evaluation_metric || 'ROC AUC'}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
