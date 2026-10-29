@@ -11,6 +11,9 @@ wheels/
 .venv/
 env/
 venv/
+.worktrees/
+llm_state.json
+
 
 # Sensitive credentials & secrets
 .kaggle/

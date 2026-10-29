@@ -25,3 +25,27 @@ noise_gate:
 
 modes:
   default: "dry-run"
+
+llm:
+  budget:
+    max_experiments_per_day: 40
+    stop_on_all_backends_exhausted: true
+  backends:
+    claude_headless:  {type: headless_cli, cmd: "claude -p", workdir_mode: worktree}
+    freebuff_cli:     {type: headless_cli, cmd: "freebuff", workdir_mode: worktree}
+    gemini_cli:       {type: headless_cli, cmd: "gemini -p", workdir_mode: worktree}
+    local_headless:   {type: headless_cli, cmd: "python -m orch.llm_cli", workdir_mode: worktree}
+    gemini_api:       {type: openai_compat, base_url: "https://generativelanguage.googleapis.com/v1beta/openai/", api_key_env: GEMINI_API_KEY, model: "gemini-2.5-flash"}
+    groq:             {type: openai_compat, base_url: "https://api.groq.com/openai/v1", api_key_env: GROQ_API_KEY, model: "openai/gpt-oss-120b"}
+    openrouter_free:  {type: openai_compat, base_url: "https://openrouter.ai/api/v1", api_key_env: OPENROUTER_API_KEY, model: "meta-llama/llama-3.3-70b-instruct:free"}
+    mock_backend:     {type: mock, workdir_mode: direct}
+  roles:
+    editor:     {chain: [claude_headless, freebuff_cli, gemini_cli]}
+    proposer:   {chain: [gemini_cli, gemini_api, groq]}
+    researcher: {chain: [gemini_api, groq, openrouter_free]}
+    reviewer:   {chain: [gemini_api, groq], must_differ_from: editor}
+  on_429: {action: next_in_chain, cooldown_minutes: 60, persist_state: true}
+  prompt_hygiene:
+    send: [train.py diff, results.tsv rows, metric values, schema, summary stats, error logs]
+    never_send: [raw data rows, labels, credentials]
+
